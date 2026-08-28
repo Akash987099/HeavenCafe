@@ -2,12 +2,17 @@
 /node_modules
 /public/build
 /public/hot
+/public
 /public/storage
 /storage/*.key
 /vendor
+/config/app
+/index.php
+.htaccess
 .env
 .env.backup
 .env.production
+.phpunit.result.cache
 Homestead.json
 Homestead.yaml
 auth.json
@@ -16,3 +21,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+.
