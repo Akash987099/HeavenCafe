@@ -1,0 +1,353 @@
+.admin-body {
+    font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #0f172a;
+}
+
+.admin-content {
+    transition: padding-left 0.25s ease;
+}
+
+.admin-topbar,
+.admin-sidebar-brand {
+    min-height: 74px;
+}
+
+body[data-theme="light"] {
+    color-scheme: light;
+}
+
+body[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+body[data-theme="dark"],
+body[data-theme="dark"] .bg-slate-100 {
+    background-color: #020617 !important;
+}
+
+body[data-theme="dark"] nav,
+body[data-theme="dark"] footer,
+body[data-theme="dark"] .bg-white,
+body[data-theme="dark"] .bg-white\/90 {
+    background-color: rgba(15, 23, 42, 0.94) !important;
+    color: #e2e8f0 !important;
+}
+
+body[data-theme="dark"] .border-slate-200 {
+    border-color: rgba(100, 116, 139, 0.35) !important;
+}
+
+body[data-theme="dark"] .text-slate-900 {
+    color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .text-slate-600,
+body[data-theme="dark"] .text-slate-500 {
+    color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .bg-slate-50 {
+    background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+body[data-theme="dark"] .hover\:bg-sky-50:hover {
+    background-color: rgba(12, 74, 110, 0.4) !important;
+}
+
+body[data-theme="dark"] .rounded-2xl.border.border-slate-200.bg-white.p-6.shadow-sm {
+    background-color: #0f172a !important;
+}
+
+body[data-theme="dark"] #theme-toggle,
+body[data-theme="dark"] nav button,
+body[data-theme="dark"] nav .shadow-sm {
+    color: #e2e8f0 !important;
+}
+
+.admin-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+    transition: width 0.25s ease;
+    overflow: visible;
+}
+
+.sidebar-edge-toggle {
+    position: absolute;
+    top: 36px;
+    right: -0.9rem;
+    z-index: 60;
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.16);
+    transition: all 0.2s ease;
+    transform: translateY(-50%);
+}
+
+.sidebar-edge-toggle:hover {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.admin-sidebar-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    border-radius: 0.875rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-sidebar-link:hover {
+    background: rgba(14, 165, 233, 0.14);
+    color: #f8fafc;
+    transform: translateX(2px);
+}
+
+.admin-sidebar-link.active {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.28), rgba(59, 130, 246, 0.18));
+    color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.22);
+}
+
+.admin-sidebar-icon {
+    display: inline-flex;
+    min-width: 1.15rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex: 0 0 1.15rem;
+}
+
+.admin-sidebar-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar {
+    width: 6rem;
+}
+
+body[data-sidebar="collapsed"] .admin-content {
+    padding-left: 6rem;
+}
+
+body[data-sidebar="collapsed"] .sidebar-copy,
+body[data-sidebar="collapsed"] .sidebar-summary {
+    display: none;
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar-link {
+    justify-content: center;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar-link::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 0.85rem);
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    border-radius: 0.65rem;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 80;
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar-link:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(2px);
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar-link.active {
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.22);
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar > div {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+body[data-sidebar="collapsed"] .admin-sidebar a.flex {
+    justify-content: center;
+}
+
+body[data-sidebar="collapsed"] .sidebar-collapsed-user {
+    display: block;
+}
+
+body[data-theme="dark"] .sidebar-edge-toggle {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+.table-search-input::placeholder {
+    color: #94a3b8;
+}
+
+.datatable-shell {
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.datatable-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+.datatable-table thead th {
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e6edf5;
+    background: #f8fafc;
+    padding: 1rem 0.85rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #97a6ba;
+}
+
+.datatable-table tbody td {
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #edf2f7;
+    padding: 1rem 0.85rem;
+    font-size: 0.88rem;
+    color: #334155;
+    vertical-align: middle;
+    background: #ffffff;
+    line-height: 1.35;
+}
+
+.datatable-table thead th:last-child,
+.datatable-table tbody td:last-child {
+    border-right: 0;
+}
+
+.datatable-table tbody tr:hover td {
+    background: #fbfdff;
+}
+
+.datatable-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    border-radius: 10px;
+    border: 1px solid #d5e9dd;
+    background: #f3fbf6;
+    color: #047857;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.datatable-provider {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    border-radius: 10px;
+    border: 1px solid #d7e5ff;
+    background: #f5f9ff;
+    color: #2563eb;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.datatable-provider-neutral {
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+}
+
+.datatable-row-grip {
+    display: inline-flex;
+    width: 0.95rem;
+    height: 0.95rem;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    flex: 0 0 0.95rem;
+}
+
+.datatable-row-grip svg {
+    width: 100%;
+    height: 100%;
+}
+
+.admin-table-empty-row td {
+    border-bottom: 0;
+}
+
+body[data-theme="dark"] .datatable-shell,
+body[data-theme="dark"] .datatable-table,
+body[data-theme="dark"] .datatable-table tbody td {
+    background: #0f172a !important;
+}
+
+body[data-theme="dark"] .datatable-toolbar,
+body[data-theme="dark"] .datatable-footer,
+body[data-theme="dark"] .datatable-table thead th {
+    background: rgba(30, 41, 59, 0.96) !important;
+}
+
+body[data-theme="dark"] .datatable-table thead th,
+body[data-theme="dark"] .datatable-table tbody td,
+body[data-theme="dark"] .datatable-select,
+body[data-theme="dark"] .table-search-input {
+    border-color: rgba(100, 116, 139, 0.35) !important;
+    color: #cbd5e1 !important;
+}
+
+body[data-theme="dark"] .datatable-table tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.8) !important;
+}
+
+body[data-theme="dark"] .datatable-badge {
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(6, 95, 70, 0.22);
+    color: #86efac;
+}
+
+body[data-theme="dark"] .datatable-provider {
+    border-color: rgba(96, 165, 250, 0.24);
+    background: rgba(30, 64, 175, 0.18);
+    color: #93c5fd;
+}
+
+body[data-theme="dark"] .datatable-provider-neutral {
+    border-color: rgba(100, 116, 139, 0.35);
+    background: rgba(15, 23, 42, 0.92);
+    color: #cbd5e1;
+}
+
+body[data-theme="dark"] .datatable-select,
+body[data-theme="dark"] .table-search-input,
+body[data-theme="dark"] .bg-slate-100 {
+    background: rgba(15, 23, 42, 0.92) !important;
+}

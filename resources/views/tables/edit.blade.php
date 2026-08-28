@@ -1,0 +1,44 @@
+@extends('layout.app')
+
+@section('content')
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0">Add</h6>
+                </div>
+
+                <div class="card-body px-4 pt-4 pb-2">
+                    <form action="{{route('table.update')}}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="id" value="{{$table->id}}">
+                        <div class="row g-3">
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Table No</label>
+                                    <input type="number" class="form-control"  id="table_no" name="table_no" placeholder="Enter Details" required value="{{$table->table_no}}">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Seats</label>
+                                    <input type="number" class="form-control" id="seat" name="seat" placeholder="Enter Details" required value="{{$table->seat}}">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection

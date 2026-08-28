@@ -1,0 +1,63 @@
+@extends('layout.app')
+
+@section('content')
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0">Add</h6>
+                </div>
+
+                <div class="card-body px-4 pt-4 pb-2">
+                    <form action="{{ route('district.update') }}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="id" value="{{ $disctrict->id }}">
+                        @csrf
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Country</label>
+                                    <select type="text" class="form-control" id="country" name="country"
+                                        placeholder="Enter Details" required>
+                                        @foreach ($country as $key => $value)
+                                            <option value="{{ $value->id }}">{{ $value->country_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Country</label>
+                                    <select type="text" class="form-control" id="state" name="state"
+                                        placeholder="Enter Details" required>
+                                        @foreach ($state as $key => $value)
+                                            <option value="{{ $value->id }}"
+                                                {{ $disctrict->state_id == $value->id ? 'selected' : '' }}>
+                                                {{ $value->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{$disctrict->name}}"
+                                        placeholder="Enter Details" required>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+@endsection
