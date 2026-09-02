@@ -5,21 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
-        'mobile',
         'password',
-        'profile_image',
+        'otp',
+        'timestamp',
+        'phone',
         'status',
-        'email_verified_at',
-        'last_login_at',
+        'email_verify',
+        'wallet_points',
+        'otp_expires_at',
+        'credit_limit',
+        'used_limit',
+        'image',
+        'is_credit_enabled'
     ];
 
     protected $hidden = [
@@ -29,12 +35,17 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'last_login_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-    public function socialAccounts()
+    // 🔐 JWT REQUIRED METHODS
+    public function getJWTIdentifier()
     {
-        return $this->hasMany(SocialAccount::class);
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }
