@@ -30,13 +30,14 @@
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="vehicle_name" class="form-label">Category</label>
-                                    <select type="text" class="form-control" id="category" name="category" required>
-                                        <option value="">----Select-----</option>
-                                        @foreach ($category as $key => $item)
-                                            <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <label for="category" class="form-label">Category</label>
+                                    <div class="subcategory-category-control">
+                                        <select class="form-control category-select" id="category" name="category[]" multiple required>
+                                            @foreach ($category as $key => $item)
+                                                <option value="{{ $item->id }}" @selected($item->id == $subcategory->category_id)>{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -79,9 +80,26 @@
         </div>
     </div>
     </div>
-    <script>
-            $(document).ready(function() {
-                $('#category').val('{{ $subcategory->category_id }}');
-            });
-    </script>
 @endsection
+
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/sumoselect.min.css">
+@include('sub_category.partials.category-select-styles')
+@endpush
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/jquery.sumoselect.min.js"></script>
+<script>
+    $(function () {
+        const $category = $('#category');
+
+        $category.SumoSelect({
+            placeholder: '----Select categories-----',
+            selectAll: true,
+            selectAllPartialCheck: true,
+            okCancelInMulti: true,
+            csvDispCount: 3
+        });
+    });
+</script>
+@endpush

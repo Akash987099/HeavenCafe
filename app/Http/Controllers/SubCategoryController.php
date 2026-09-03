@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Category;
 use App\Models\SubCategory;
 
@@ -67,7 +68,8 @@ class SubCategoryController extends Controller
     public function save(Request $request)
     {
         $request->validate([
-            'category'    => 'required|exists:category,id',
+            'category'    => 'required|array|min:1',
+            'category.*'  => 'exists:category,id',
             'name' => 'required|string|max:255',
             'image' => 'required|image',
         ]);
@@ -75,12 +77,18 @@ class SubCategoryController extends Controller
         $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
         $request->file('image')->move(public_path('subcategory'), $imageName);
 
-        $subcategory = $this->subcategory;
-        $subcategory->name = $request->name;
-        $subcategory->description = $request->description;
-        $subcategory->category_id = $request->category;
-        $subcategory->image = 'subcategory/' . $imageName;
-        $save = $subcategory->save();
+        $save = DB::transaction(function () use ($request, $imageName) {
+            foreach (array_unique($request->category) as $categoryId) {
+                $subcategory = new SubCategory();
+                $subcategory->name = $request->name;
+                $subcategory->description = $request->description;
+                $subcategory->category_id = $categoryId;
+                $subcategory->image = 'subcategory/' . $imageName;
+                $subcategory->save();
+            }
+
+            return true;
+        });
 
         if ($save) {
             return redirect()->back()->with('success', 'Successfully!');
@@ -109,7 +117,8 @@ class SubCategoryController extends Controller
     {
         $request->validate([
             'id'    => 'required|exists:sub_category,id',
-            'category'    => 'required|exists:category,id',
+            'category'    => 'required|array|min:1',
+            'category.*'  => 'exists:category,id',
             'name'  => 'required|string|max:255',
             'image' => 'nullable',
         ]);
@@ -122,7 +131,8 @@ class SubCategoryController extends Controller
 
         $subcategory->name = $request->name;
         $subcategory->description = $request->description;
-        $subcategory->category_id = $request->category;
+        $categoryIds = array_values(array_unique($request->category));
+        $subcategory->category_id = array_shift($categoryIds);
 
         if ($request->hasFile('image')) {
 
@@ -137,6 +147,12 @@ class SubCategoryController extends Controller
         }
 
         if ($subcategory->save()) {
+            foreach ($categoryIds as $categoryId) {
+                $duplicate = $subcategory->replicate();
+                $duplicate->category_id = $categoryId;
+                $duplicate->save();
+            }
+
             return redirect()->back()->with('success', 'Category updated successfully!');
         }
 
