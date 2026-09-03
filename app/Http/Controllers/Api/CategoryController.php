@@ -46,26 +46,30 @@ class CategoryController extends Controller
 
     public function categorySubcategory()
     {
-        $categories = Category::whereHas('subCategories')
-            ->with(['subCategories' => function ($query) {
-                $query->select('id', 'category_id', 'name', 'image', 'description')
-                    ->withCount(['products' => function ($q) {
-                        $q->where('status', 'active');
-                    }]);
-            }])
+        $categories = Category::query()
             ->orderBy('position', 'asc')
             ->where('status', 1)
             ->select('id', 'name', 'image')
             ->get();
 
         $data = $categories->map(function ($cat) {
+            $subcategories = $this->subcategoryQueryForCategoryIds([$cat->id])
+                ->select('id', 'category_id', 'name', 'image', 'description')
+                ->withCount(['products' => function ($query) {
+                    $query->where('status', 'active');
+                }])
+                ->get();
+
+            if ($subcategories->isEmpty()) {
+                return null;
+            }
 
             return [
                 'url'   => '2' . '-' . Str::slug($cat->name) . '-' . $cat->id,
                 'name'  => $cat->name,
                 'image' => $cat->image,
 
-                'subCategories' => $cat->subCategories->map(function ($sub) {
+                'subCategories' => $subcategories->map(function ($sub) {
 
                     return [
                         'url'   => '3' . '-' . Str::slug($sub->name) . '-' . $sub->id,
@@ -77,7 +81,7 @@ class CategoryController extends Controller
                 })->values()
 
             ];
-        })->values();
+        })->filter()->values();
 
         return response()->json([
             'status' => true,
@@ -87,17 +91,29 @@ class CategoryController extends Controller
 
     public function FavouriteSubcategory()
     {
-        $category = Category::whereHas('subCategories')
-            ->with(['subCategories' => function ($query) {
-                $query->select('id', 'category_id', 'name', 'image')
-                    ->withCount(['products' => function ($q) {
-                        $q->where('status', 'active');
-                    }]);
-            }])
+        $categories = Category::query()
             ->orderBy('position', 'desc')
             ->where('status', 1)
             ->select('id', 'name', 'image')
-            ->first();
+            ->get();
+
+        $category = null;
+        $subcategories = collect();
+
+        foreach ($categories as $candidate) {
+            $candidateSubcategories = $this->subcategoryQueryForCategoryIds([$candidate->id])
+                ->select('id', 'category_id', 'name', 'image')
+                ->withCount(['products' => function ($query) {
+                    $query->where('status', 'active');
+                }])
+                ->get();
+
+            if ($candidateSubcategories->isNotEmpty()) {
+                $category = $candidate;
+                $subcategories = $candidateSubcategories;
+                break;
+            }
+        }
 
         if (!$category) {
             return response()->json([
@@ -111,7 +127,7 @@ class CategoryController extends Controller
             'name'  => $category->name,
             'image' => $category->image,
 
-            'subCategories' => $category->subCategories->map(function ($sub) {
+            'subCategories' => $subcategories->map(function ($sub) {
 
                 return [
                     'url'   => '3-' . Str::slug($sub->name) . '-' . $sub->id,
@@ -142,9 +158,8 @@ class CategoryController extends Controller
                 ->values()
                 ->all();
 
-            $subcategory->whereHas('categories', function ($query) use ($categoryIds) {
-                $query->whereIn('category.id', $categoryIds);
-            });
+            $subcategory = $this->subcategoryQueryForCategoryIds($categoryIds)
+                ->select('id', 'category_id', 'name', 'image');
         }
 
         $subcategory = $subcategory->get();
@@ -187,5 +202,16 @@ class CategoryController extends Controller
             'status' => true,
             'data' => $brands
         ], 200);
+    }
+
+    private function subcategoryQueryForCategoryIds(array $categoryIds)
+    {
+        return $this->subcategory->newQuery()
+            ->where(function ($query) use ($categoryIds) {
+                $query->whereIn('category_id', $categoryIds)
+                    ->orWhereHas('categories', function ($categoryQuery) use ($categoryIds) {
+                        $categoryQuery->whereIn('category.id', $categoryIds);
+                    });
+            });
     }
 }

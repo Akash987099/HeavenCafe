@@ -734,8 +734,11 @@ class ProductController extends Controller
 
             if (!$subCategoryId) {
                 $subCategory = $this->sub_category
-                    ->whereHas('categories', function ($query) use ($categoryIds) {
-                        $query->whereIn('category.id', $categoryIds);
+                    ->where(function ($query) use ($categoryIds) {
+                        $query->whereIn('category_id', $categoryIds)
+                            ->orWhereHas('categories', function ($categoryQuery) use ($categoryIds) {
+                                $categoryQuery->whereIn('category.id', $categoryIds);
+                            });
                     })
                     ->whereRaw('LOWER(name) = ?', [Str::lower($name)])
                     ->first();
