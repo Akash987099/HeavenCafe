@@ -714,7 +714,15 @@ class ProductController extends Controller
 
     protected function resolveRemoteCategoryData(array $remoteCategories, $clientCategoryId): array
     {
-        $categoryId = $clientCategoryId;
+        $categoryIds = collect(is_array($clientCategoryId) ? $clientCategoryId : explode(',', (string) $clientCategoryId))
+            ->map(fn ($categoryId) => trim((string) $categoryId))
+            ->filter(fn ($categoryId) => ctype_digit($categoryId))
+            ->map(fn ($categoryId) => (int) $categoryId)
+            ->unique()
+            ->values()
+            ->all();
+
+        $categoryId = $categoryIds[0] ?? null;
         $subCategoryId = null;
 
         foreach ($remoteCategories as $remoteCategory) {
@@ -726,7 +734,9 @@ class ProductController extends Controller
 
             if (!$subCategoryId) {
                 $subCategory = $this->sub_category
-                    ->where('category_id', $clientCategoryId)
+                    ->whereHas('categories', function ($query) use ($categoryIds) {
+                        $query->whereIn('category.id', $categoryIds);
+                    })
                     ->whereRaw('LOWER(name) = ?', [Str::lower($name)])
                     ->first();
 

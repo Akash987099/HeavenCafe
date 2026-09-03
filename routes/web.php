@@ -98,6 +98,7 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('save', 'save')->name('save');
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
+        Route::delete('delete/{id}', 'delete')->name('delete');
     });
 
     Route::prefix('brands')->controller(BrandController::class)->name('brand.')->group(function () {

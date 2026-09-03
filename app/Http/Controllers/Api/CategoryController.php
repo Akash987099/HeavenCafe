@@ -133,8 +133,18 @@ class CategoryController extends Controller
         $subcategory = $this->subcategory
             ->select('id', 'category_id', 'name', 'image');
 
-        if ($id) {
-            $subcategory->where('category_id', $id);
+        if ($id !== null) {
+            $categoryIds = collect(explode(',', (string) $id))
+                ->map(fn ($categoryId) => trim($categoryId))
+                ->filter(fn ($categoryId) => ctype_digit($categoryId))
+                ->map(fn ($categoryId) => (int) $categoryId)
+                ->unique()
+                ->values()
+                ->all();
+
+            $subcategory->whereHas('categories', function ($query) use ($categoryIds) {
+                $query->whereIn('category.id', $categoryIds);
+            });
         }
 
         $subcategory = $subcategory->get();

@@ -45,17 +45,21 @@
                                         </td>
 
                                         <td>
-                                            <p class="text-xs font-weight-bold mb-0">{{ $item->category ? $item->category->name : 'N/A' }}</p>
+                                            <p class="text-xs font-weight-bold mb-0">{{ $item->categories->pluck('name')->implode(', ') ?: 'N/A' }}</p>
                                         </td>
                                         <td>
                                             <p class="text-xs font-weight-bold mb-0">{{ $item->name }}</p>
                                         </td>
 
                                         <td>
-                                            <a href="{{ route('sub_category.edit', $item->id) }}"
-                                                class="text-secondary font-weight-bold text-xs">
+                                            <a href="{{ route('sub_category.edit', $item->id) }}" class="text-secondary font-weight-bold text-xs me-3">
                                                 Edit
                                             </a>
+                                            <form action="{{ route('sub_category.delete', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this subcategory?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-link p-0 text-danger font-weight-bold text-xs">Delete</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach

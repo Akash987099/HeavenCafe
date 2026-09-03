@@ -34,7 +34,7 @@
                                     <div class="subcategory-category-control">
                                         <select class="form-control category-select" id="category" name="category[]" multiple required>
                                             @foreach ($category as $key => $item)
-                                                <option value="{{ $item->id }}" @selected($item->id == $subcategory->category_id)>{{ $item->name }}</option>
+                                                <option value="{{ $item->id }}" @selected($subcategory->categories->contains('id', $item->id))>{{ $item->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>

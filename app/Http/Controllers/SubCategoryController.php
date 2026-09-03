@@ -20,7 +20,7 @@ class SubCategoryController extends Controller
 
     public function index()
     {
-        $category = $this->subcategory->with('category')->orderBy('id', 'desc')->paginate(config('constants.pagination_limit'));
+        $category = $this->subcategory->with('categories')->orderBy('id', 'desc')->paginate(config('constants.pagination_limit'));
         // dd($category);
         return view('sub_category.index', compact('category'));
     }
@@ -34,7 +34,7 @@ class SubCategoryController extends Controller
     public function export()
     {
         $subcategories = $this->subcategory
-            ->with('category')
+            ->with('categories')
             ->orderBy('id', 'desc')
             ->get();
 
@@ -54,7 +54,7 @@ class SubCategoryController extends Controller
             foreach ($subcategories as $index => $subcategory) {
                 fputcsv($file, [
                     $index + 1,
-                    $subcategory->category ? $subcategory->category->name : 'N/A',
+                    $subcategory->categories->pluck('name')->implode(', ') ?: 'N/A',
                     $subcategory->name,
                 ]);
             }
@@ -78,14 +78,15 @@ class SubCategoryController extends Controller
         $request->file('image')->move(public_path('subcategory'), $imageName);
 
         $save = DB::transaction(function () use ($request, $imageName) {
-            foreach (array_unique($request->category) as $categoryId) {
-                $subcategory = new SubCategory();
-                $subcategory->name = $request->name;
-                $subcategory->description = $request->description;
-                $subcategory->category_id = $categoryId;
-                $subcategory->image = 'subcategory/' . $imageName;
-                $subcategory->save();
-            }
+            $categoryIds = array_values(array_unique($request->category));
+            $subcategory = new SubCategory();
+            $subcategory->name = $request->name;
+            $subcategory->description = $request->description;
+            // Keep the first ID for older integrations that still read category_id directly.
+            $subcategory->category_id = $categoryIds[0];
+            $subcategory->image = 'subcategory/' . $imageName;
+            $subcategory->save();
+            $subcategory->categories()->sync($categoryIds);
 
             return true;
         });
@@ -109,6 +110,7 @@ class SubCategoryController extends Controller
             return redirect()->back()->with('error', 'Record not found!');
         }
 
+        $subcategory->load('categories');
         $category = $this->category->all();
         return view('sub_category.edit', compact('subcategory', 'category'));
     }
@@ -132,7 +134,7 @@ class SubCategoryController extends Controller
         $subcategory->name = $request->name;
         $subcategory->description = $request->description;
         $categoryIds = array_values(array_unique($request->category));
-        $subcategory->category_id = array_shift($categoryIds);
+        $subcategory->category_id = $categoryIds[0];
 
         if ($request->hasFile('image')) {
 
@@ -147,16 +149,36 @@ class SubCategoryController extends Controller
         }
 
         if ($subcategory->save()) {
-            foreach ($categoryIds as $categoryId) {
-                $duplicate = $subcategory->replicate();
-                $duplicate->category_id = $categoryId;
-                $duplicate->save();
-            }
+            $subcategory->categories()->sync($categoryIds);
 
             return redirect()->back()->with('success', 'Category updated successfully!');
         }
 
         return redirect()->back()->with('error', 'Update failed!');
+    }
+
+    public function delete($id)
+    {
+        $subcategory = $this->subcategory->withCount('products')->find($id);
+
+        if (!$subcategory) {
+            return redirect()->back()->with('error', 'Record not found!');
+        }
+
+        if ($subcategory->products_count > 0) {
+            return redirect()->back()->with('error', 'This subcategory is used by products and cannot be deleted.');
+        }
+
+        DB::transaction(function () use ($subcategory) {
+            $subcategory->categories()->detach();
+            $subcategory->delete();
+        });
+
+        if ($subcategory->image && file_exists(public_path($subcategory->image))) {
+            unlink(public_path($subcategory->image));
+        }
+
+        return redirect()->back()->with('success', 'Subcategory deleted successfully!');
     }
 
 }

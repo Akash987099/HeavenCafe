@@ -559,7 +559,9 @@ class ProductController extends Controller
             return null;
         }
 
-        $subcategories = SubCategory::where('category_id', $category->id)
+        $subcategories = SubCategory::whereHas('categories', function ($query) use ($category) {
+                $query->whereIn('category.id', [$category->id]);
+            })
             ->select('id', 'name', 'image')
             ->withCount(['products' => function ($q) {
                 $q->where('status', 'active');
