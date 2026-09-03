@@ -211,7 +211,6 @@
             placeholder: '----Select categories-----',
             selectAll: true,
             selectAllPartialCheck: true,
-            okCancelInMulti: true,
             csvDispCount: 3
         });
     });
