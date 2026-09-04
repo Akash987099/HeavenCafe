@@ -55,9 +55,9 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'https://cafe.heavenkart.online'),
 
-    'asset_url' => env('ASSET_URL', 'https://awcai.cloud/script/cafe/public/'),
+    'asset_url' => env('ASSET_URL', 'https://cafe.heavenkart.online/public/'),
 
     /*
     |--------------------------------------------------------------------------
