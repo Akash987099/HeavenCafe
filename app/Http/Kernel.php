@@ -48,6 +48,10 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\AdminMiddleware::class,
         ],
 
+        'pos' => [
+            \App\Http\Middleware\PosMiddleware::class,
+        ],
+
     ];
 
     /**
@@ -68,6 +72,7 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'admins' => \App\Http\Middleware\AdminMiddleware::class,
+        'pos' => \App\Http\Middleware\PosMiddleware::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];
 }

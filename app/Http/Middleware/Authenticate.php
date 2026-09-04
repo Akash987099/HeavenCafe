@@ -26,6 +26,10 @@ class Authenticate extends Middleware
                 return route('login');
             }
 
+            if($guard == 'pos') {
+                return route('pos.login');
+            }
+
         }
 
         return route('login');

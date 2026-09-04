@@ -46,6 +46,11 @@ return [
             'provider' => 'admins',
         ],
 
+        'pos' => [
+            'driver' => 'session',
+            'provider' => 'pos',
+        ],
+
         'api' => [
             'driver' => 'jwt',
             'provider' => 'users',
@@ -79,6 +84,11 @@ return [
         'admins' => [
             'driver' => 'eloquent',
             'model' => App\Models\Admin::class,
+        ],
+
+        'pos' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Pos::class,
         ],
         
     ],
@@ -126,6 +136,13 @@ return [
 
         'clients' => [
             'provider' => 'clients',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'pos' => [
+            'provider' => 'pos',
             'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
