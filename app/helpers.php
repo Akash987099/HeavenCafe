@@ -6,6 +6,8 @@ use App\Mail\OtpMail;
 use App\Models\Setting;
 use App\Models\Points;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use App\Models\Pos;
 
 use Carbon\Carbon;
 
