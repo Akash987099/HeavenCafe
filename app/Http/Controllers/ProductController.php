@@ -18,6 +18,10 @@ use App\Models\Summer;
 use App\Models\Type;
 use App\Models\Varient;
 use App\Models\VarientValue;
+use App\Models\Plateform;
+use App\Models\Tax;
+use App\Models\ProductPartner;
+use App\Models\ChildCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -25,6 +29,7 @@ class ProductController extends Controller
 {
     protected $category;
     protected $sub_category;
+    protected $child_category;
     protected $brand;
     protected $discount;
     protected $product;
@@ -37,11 +42,15 @@ class ProductController extends Controller
     protected $attributeValue;
     protected $varient;
     protected $varientValue;
+    protected $plateform;
+    protected $ProductPartner;
+    protected $tax;
 
     public function __construct()
     {
         $this->category = new Category();
         $this->sub_category = new SubCategory();
+        $this->child_category = new ChildCategory();
         $this->brand = new Brand();
         $this->discount = new Discount();
         $this->product = new Product();
@@ -54,12 +63,17 @@ class ProductController extends Controller
         $this->attributeValue = new AttributeValue();
         $this->varient = new Varient();
         $this->varientValue = new VarientValue();
+        $this->plateform = new Plateform();
+        $this->ProductPartner = new ProductPartner();
+        $this->tax     = new Tax();
     }
 
 
     public function index()
     {
         $summer = $this->summer->all();
+        $tax = $this->tax->all();
+        $brands = $this->brand->orderBy('name')->get();
         $clients = $this->client->where('status', 1)->orderBy('name')->get();
         $keyword = trim((string) request('q', ''));
 
@@ -78,7 +92,7 @@ class ProductController extends Controller
             ->paginate(config('constants.pagination_limit'))
             ->appends(['q' => $keyword]);
 
-        return view('product.index', compact('products', 'summer', 'clients'));
+        return view('product.index', compact('products', 'summer', 'brands', 'clients', 'tax'));
     }
 
     public function search(Request $request)
@@ -124,10 +138,12 @@ class ProductController extends Controller
     {
         $category = $this->category->all();
         $sub_category = $this->sub_category->all();
+        $child_category = $this->child_category->all();
         $brand = $this->brand->all();
         $discount = $this->discount->all();
         $type = $this->type->all();
-        return view('product.add', compact('category', 'sub_category', 'brand', 'discount', 'type'));
+        $tax = $this->tax->all();
+        return view('product.add', compact('category', 'sub_category', 'child_category', 'brand', 'discount', 'type', 'tax'));
     }
 
     public function import(Request $request)
@@ -254,11 +270,15 @@ class ProductController extends Controller
         $product->meta_tag = $request->meta_tag;
         $product->category = $request->category;
         $product->sub_category = $request->sub_category;
+        $product->child_category = $request->child_category;
         $product->discount = $request->discount;
         $product->brands = $request->brand;
         $product->type = $request->type;
         $product->type_value = $request->type_value;
         $product->description = $request->description;
+        $product->tax = $request->tax;
+        $product->is_store = $request->assign_store;
+        $product->store_qty = $request->store_qty;
         $product->short_description = $request->short_description;
         $product->image = 'product/' . $imageName;
         $product->barcode_base = $barcodeBase64;
@@ -285,10 +305,12 @@ class ProductController extends Controller
 
         $category = $this->category->all();
         $sub_category = $this->sub_category->all();
+        $child_category = $this->child_category->all();
         $discount = $this->discount->all();
         $brand = $this->brand->all();
         $type = $this->type->all();
-        return view('product.edit', compact('product', 'category', 'sub_category', 'discount', 'brand', 'type'));
+        $tax = $this->tax->all();
+        return view('product.edit', compact('product', 'category', 'sub_category', 'child_category', 'discount', 'brand', 'type', 'tax'));
     }
 
     public function update(Request $request)
@@ -316,6 +338,7 @@ class ProductController extends Controller
         $product->meta_tag = $request->meta_tag;
         $product->category = $request->category;
         $product->sub_category = $request->sub_category;
+        $product->child_category = $request->child_category;
         $product->discount = $request->discount;
         $product->short_description = $request->short_description;
         $product->brands = $request->brand;
@@ -323,6 +346,9 @@ class ProductController extends Controller
         $product->type_value = $request->type_value;
         $product->slug = $request->slug;
         $product->description = $request->description;
+        $product->tax = $request->tax;
+        $product->is_store = $request->assign_store;
+        $product->store_qty = $request->store_qty;
 
         if ($request->hasFile('image')) {
 
@@ -445,6 +471,68 @@ class ProductController extends Controller
         return response()->json(['status' => 'success', 'message' => "Success!"]);
     }
 
+    //plateforms
+
+    public function plateform($id)
+    {
+        if (!$id) {
+            return redirect()->back()->with('error', 'id not found!');
+        }
+
+        $product = $this->product->find($id);
+        $plateform = $this->plateform->get();
+
+
+        if (!$product) {
+            return redirect()->back()->with('error', 'Record not found!');
+        }
+
+        $ProductPartner = $this->ProductPartner->where('product_id', $id)->get();
+        // dd($ProductPartner);
+
+        return view('product.plateform', compact('product', 'plateform', 'ProductPartner'));
+    }
+
+    public function plateform_save(Request $request)
+    {
+        $request->validate([
+            'plateform_id' => 'required',
+            'product_url' => 'required|url',
+            'id'=> 'required',
+        ]);
+
+        $productPartner = new ProductPartner();
+
+        $productPartner->product_id = $request->id;
+        $productPartner->platform_id = $request->plateform_id;
+        $productPartner->product_url = $request->product_url;
+        $productPartner->save();
+
+        return redirect()->back()->with('success', 'Plateform added successfully!');
+    }
+
+    public function plateform_delete($id)
+    {
+
+        if (!$id) {
+            return response()->json(['status' => 'error', 'message' => "id not found!"]);
+        }
+
+        $productPartner = $this->ProductPartner->where('id', $id)->first();
+
+        if (!$productPartner) {
+            return response()->json(['status' => 'error', 'message' => "Record not found!"]);
+        }
+
+        $productPartner = $this->ProductPartner->where('id', $id)->delete();
+
+        if (!$productPartner) {
+            return response()->json(['status' => 'error', 'message' => "Failed!"]);
+        }
+
+        return response()->json(['status' => 'success', 'message' => "Success!"]);
+    }
+
     // Stock
 
     public function stock($id)
@@ -535,6 +623,73 @@ class ProductController extends Controller
         return response()->json([
             'status'    => 'success',
         ], 200);
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:products,id'],
+            'field' => ['required', 'in:brand,summer,tax'],
+            'value' => ['required', 'integer'],
+        ]);
+
+        $products = $this->product->whereIn('id', $validated['ids']);
+
+        if ($validated['field'] === 'brand') {
+            $brand = $this->brand->find($validated['value']);
+
+            if (!$brand) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Brand not found'
+                ], 404);
+            }
+
+            $products->update([
+                'brands' => $brand->id,
+                'brand_name' => $brand->name,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Selected products brand updated successfully.'
+            ], 200);
+        }
+
+        if ($validated['field'] === 'summer') {
+
+        $summer = $this->summer->find($validated['value']);
+
+        if (!$summer) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Summer not found'
+            ], 404);
+        }
+
+        $products->update([
+            'summer_id' => $validated['value'],
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Selected products summer updated successfully.'
+        ], 200);
+    }
+
+    if ($validated['field'] === 'tax') {
+
+            $products->update([
+                'tax' => $validated['value'],
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Tax Apply successfully.'
+            ], 200);
+        }
+
     }
 
     // Similar
@@ -714,15 +869,7 @@ class ProductController extends Controller
 
     protected function resolveRemoteCategoryData(array $remoteCategories, $clientCategoryId): array
     {
-        $categoryIds = collect(is_array($clientCategoryId) ? $clientCategoryId : explode(',', (string) $clientCategoryId))
-            ->map(fn ($categoryId) => trim((string) $categoryId))
-            ->filter(fn ($categoryId) => ctype_digit($categoryId))
-            ->map(fn ($categoryId) => (int) $categoryId)
-            ->unique()
-            ->values()
-            ->all();
-
-        $categoryId = $categoryIds[0] ?? null;
+        $categoryId = $clientCategoryId;
         $subCategoryId = null;
 
         foreach ($remoteCategories as $remoteCategory) {
@@ -734,12 +881,7 @@ class ProductController extends Controller
 
             if (!$subCategoryId) {
                 $subCategory = $this->sub_category
-                    ->where(function ($query) use ($categoryIds) {
-                        $query->whereIn('category_id', $categoryIds)
-                            ->orWhereHas('categories', function ($categoryQuery) use ($categoryIds) {
-                                $categoryQuery->whereIn('category.id', $categoryIds);
-                            });
-                    })
+                    ->where('category_id', $clientCategoryId)
                     ->whereRaw('LOWER(name) = ?', [Str::lower($name)])
                     ->first();
 
@@ -981,5 +1123,23 @@ class ProductController extends Controller
         return response()->json([
             'status'    => 'success',
         ], 200);
+    }
+
+    public function barcode(){
+        $barcodes = $this->product->select('id', 'sku_product_id', 'barcode_base')->orderBy('id', 'desc')->paginate(config('constants.pagination_limit'));
+        return view('product.barcodes', compact('barcodes'));
+    }
+
+    public function barcode_print(Request $request)
+    {
+        $ids = $request->ids;
+
+        if (!$ids) {
+            return redirect()->back()->with('error', 'Please select orders');
+        }
+
+        $products = $this->product->whereIn('id', $ids)->get();
+
+        return view('product.print_barcode', compact('products'));
     }
 }

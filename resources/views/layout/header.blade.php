@@ -41,7 +41,6 @@
         integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" integrity="sha512-2ImtlRlf2VVmiGZsjm9bEyhjGW4dU7B6TNwh/hx/iSByxNENtj3WVE6o/9Lj4TJeVXPi4bnOIMXFIJJAeufa0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    @stack('styles')
 </head>
 
 <style>
@@ -1652,6 +1651,8 @@
                                 href="{{ route('sub_category.index') }}"><i class="fas fa-list-ul"></i>Sub Category</a>
                             <a class="nav-link {{ request()->routeIs('brand.*') ? 'active' : '' }}"
                                 href="{{ route('brand.index') }}"><i class="fas fa-tags"></i>Brands</a>
+                            <a class="nav-link {{ request()->routeIs('plateform.*') ? 'active' : '' }}"
+                                href="{{ route('plateform.index') }}"><i class="fas fa-globe"></i>Platforms</a>
                             <a class="nav-link {{ request()->routeIs('table.*') ? 'active' : '' }}"
                                 href="{{ route('table.index') }}"><i class="fas fa-list"></i>Tables</a>
                             <a class="nav-link {{ request()->routeIs('points.*') ? 'active' : '' }}"
@@ -1666,6 +1667,8 @@
                                 href="{{ route('discount.index') }}"><i class="fas fa-percent"></i>Discount</a>
                             <a class="nav-link {{ request()->routeIs('product.*') ? 'active' : '' }}"
                                 href="{{ route('product.index') }}"><i class="fas fa-box-open"></i>Product</a>
+                            <a class="nav-link {{ request()->routeIs('product.*') ? 'active' : '' }}"
+                                href="{{ route('product.barcode') }}"><i class="fas fa-box-open"></i>Product Barcode</a>
                             <a class="nav-link {{ request()->routeIs('combo.*') ? 'active' : '' }}"
                                 href="{{ route('combo.index') }}"><i class="fas fa-box-open"></i>Combo Product</a>
                             <a class="nav-link {{ request()->routeIs('store.*') ? 'active' : '' }}"
@@ -1676,6 +1679,8 @@
                                 href="{{ route('attribute_value.index') }}"><i class="fas fa-store"></i>Attribute Value</a>
                             <a class="nav-link {{ request()->routeIs('offer.*') ? 'active' : '' }}"
                                 href="{{ route('offer.index') }}"><i class="fas fa-tags"></i>Offer</a>
+                            <a class="nav-link {{ request()->routeIs('courier.*') ? 'active' : '' }}"
+                                href="{{ route('courier.index') }}"><i class="fas fa-tags"></i>Courier</a>
                         </div>
                     </div>
                 </li>
@@ -1708,6 +1713,30 @@
                                 href="{{ route('block.index') }}"><i class="fas fa-vector-square"></i>Block</a>
                             <a class="nav-link {{ request()->routeIs('village.*') ? 'active' : '' }}"
                                 href="{{ route('village.index') }}"><i class="fas fa-house"></i>Village</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('status.*') || request()->routeIs('posuser.*') || request()->routeIs('village.*') ? '' : 'collapsed' }}"
+                        data-bs-toggle="collapse" href="#sidebarPos" role="button"
+                        aria-expanded="{{ request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'true' : 'false' }}"
+                        aria-controls="sidebarPos">
+                        <div
+                            class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-sitemap text-dark"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Pos Management</span>
+                    </a>
+                    <div class="collapse {{ request()->routeIs('pos_user.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'show' : '' }}"
+                        id="sidebarPos">
+                        <div class="side-submenu">
+                            <a class="nav-link {{ request()->routeIs('pos_user.*') ? 'active' : '' }}"
+                                href="{{ route('pos_user.index') }}"><i class="fas fa-user"></i>Pos</a>
+                            <a class="nav-link {{ request()->routeIs('pos_user.*') ? 'active' : '' }}"
+                                href="{{ route('pos_user.store-order') }}"><i class="fas fa-user"></i>Orders</a>
+                            <a class="nav-link {{ request()->routeIs('pos_user.*') ? 'active' : '' }}"
+                                href="{{ route('pos_user.orders') }}"><i class="fas fa-user"></i>Pos Orders</a>
                         </div>
                     </div>
                 </li>
@@ -1844,6 +1873,8 @@
                                 href="{{ route('promotional.index') }}"><i class="fas fa-bullhorn"></i>Promotional</a>
                             <a class="nav-link {{ request()->routeIs('email_template.*') ? 'active' : '' }}"
                                 href="{{ route('email_template.index') }}"><i class="fas fa-envelope"></i>Email Template</a>
+                            <a class="nav-link {{ request()->routeIs('policy.*') ? 'active' : '' }}"
+                                href="{{ route('policy.index') }}"><i class="fas fa-file-contract"></i>Policy</a>
                         </div>
                     </div>
                 </li>

@@ -44,6 +44,12 @@ use App\Http\Controllers\CardController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\FaqController;
+use App\Http\Controllers\CourierController;
+use App\Http\Controllers\PlateformController;
+use App\Http\Controllers\ChildCategoryController;
+use App\Http\Controllers\ProductPositionController;
+use App\Http\Controllers\PosUserController;
+use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\Api\FaqController as ApiFaqController;
 
 // Cafe
@@ -86,6 +92,30 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('status', 'status')->name('status');
     });
 
+    Route::prefix('posuser')->controller(PosUserController::class)->name('pos_user.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('add', 'add')->name('add');
+        Route::post('save', 'save')->name('save');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update', 'update')->name('update');
+        Route::get('orders', 'orders')->name('orders');
+        Route::get('order/{id}', 'orderView')->name('order_view');
+
+        // pos Products Order
+
+        Route::get('store/order', 'storeOrder')->name('store-order');
+        Route::get('store/order/{order}', 'storeOrderView')->name('store-order.view');
+        Route::post('store/order/{order}/status', 'updateStoreOrderStatus')->name('store-order.status');
+        Route::get('store/order/{order}/invoice', 'downloadStoreOrderInvoice')->name('store-order.invoice');
+    });
+
+    Route::prefix('policies')->controller(PolicyController::class)->name('policy.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('add', 'add')->name('add');
+        Route::post('save', 'save')->name('save');
+        Route::delete('delete/{id}', 'delete')->name('delete');
+    });
+
     Route::prefix('categories')->controller(CategoryController::class)->name('category.')->group(function () {
         Route::get('', 'index')->name('index');
         Route::get('export', 'export')->name('export');
@@ -104,7 +134,19 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('save', 'save')->name('save');
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
-        Route::delete('delete/{id}', 'delete')->name('delete');
+    });
+
+    Route::prefix('child/category')->controller(ChildCategoryController::class)->name('child_category.')->group(function () {
+        Route::get('/{id}', 'index')->name('index');
+        Route::get('add/{id}', 'add')->name('add');
+        Route::post('save/{id}', 'save')->name('save');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update', 'update')->name('update');
+    });
+
+    Route::prefix('product/postion')->controller(ProductPositionController::class)->name('product_position.')->group(function () {
+        Route::get('/{id}/{type}', 'index')->name('index');
+        Route::post('update-position', 'updatePosition')->name('updatePosition');
     });
 
     Route::prefix('brands')->controller(BrandController::class)->name('brand.')->group(function () {
@@ -134,15 +176,25 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('status', 'status')->name('status');
         Route::post('update', 'update')->name('update');
+        Route::get('barcode', 'barcode')->name('barcode');
+        Route::post('barcode_print', 'barcode_print')->name('barcode_print');
         // Gallery
         Route::get('gallery/{id}', 'gallery')->name('gallery');
         Route::post('gallery_save', 'gallery_save')->name('gallery_save');
         Route::delete('gallery_delete/{id}', 'gallery_delete')->name('gallery_delete');
+
+        // plateform
+        Route::get('plateform/{id}', 'plateform')->name('plateform');
+        Route::post('plateform_save', 'plateform_save')->name('plateform_save');
+        Route::delete('plateform_delete/{id}', 'plateform_delete')->name('plateform_delete');
+
         // Stock
         Route::get('stock/{id}', 'stock')->name('stock');
         Route::post('stock_save', 'stockSave')->name('stock_save');
         Route::post('select_stock', 'selectStock')->name('select_stock');
         Route::post('summer_status', 'summerStatus')->name('summer_status');
+        Route::post('bulk-update', 'bulkUpdate')->name('bulk_update');
+        // Route::post('bulk-update', 'bulkUpdate')->name('bulk_update');
         // Simalar
         Route::get('similar/{id}', 'similar')->name('similar');
         Route::post('similar/save', 'saveSimilar')->name('similar.save');
@@ -488,6 +540,28 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
         Route::post('status', 'updateStatus')->name('status');
+        Route::delete('delete/{id}', 'delete')->name('delete');
+    });
+
+    Route::prefix('courier')->controller(CourierController::class)->name('courier.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('add', 'add')->name('add');
+        Route::post('save', 'save')->name('save');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update', 'update')->name('update');
+        Route::post('status', 'updateStatus')->name('status');
+        Route::post('shipped', 'courier')->name('shipped');
+        Route::delete('delete/{id}', 'delete')->name('delete');
+    });
+
+    Route::prefix('plateform')->controller(PlateformController::class)->name('plateform.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('add', 'add')->name('add');
+        Route::post('save', 'save')->name('save');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update', 'update')->name('update');
+        Route::post('status', 'updateStatus')->name('status');
+        Route::post('shipped', 'courier')->name('shipped');
         Route::delete('delete/{id}', 'delete')->name('delete');
     });
 

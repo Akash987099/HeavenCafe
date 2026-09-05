@@ -137,6 +137,18 @@
 
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Child Category</label>
+                                    <select type="text" class="form-control" id="child_category" name="child_category" placeholder="Enter Details">
+                                        <option value="">------Select sub Category------</option>
+                                        @foreach ($child_category as $key => $item)
+                                            <option value="{{$item->id}}" data-id="{{$item->sub_category_id}}">{{$item->name}}</option>
+                                        @endforeach
+                                    </select>    
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label for="vehicle_name" class="form-label">Discount</label>
                                     <select type="text" class="form-control" id="discount" name="discount" placeholder="Enter Details">
                                         <option value="">------Select Discount------</option>
@@ -175,6 +187,35 @@
                                 <div class="form-group">
                                     <label for="vehicle_number" class="form-label">Type Value</label>
                                     <input type="text" class="form-control" id="type_value" name="type_value" value="{{$product->type_value}}" placeholder="Enter Details">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Tax</label>
+                                    <select type="text" class="form-control" id="tax" name="tax">
+                                        <option value="">------Select Types------</option>
+                                        @foreach ($tax as $key => $item)
+                                            <option value="{{$item->tax_value}}" data-id="{{$item->id}}">{{$item->tax_value}}</option>
+                                        @endforeach
+                                    </select>    
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_name" class="form-label">Assign Store</label>
+                                    <select type="text" class="form-control" id="assign_store" name="assign_store">
+                                        <option value="0">------Select Types------</option>
+                                        <option value="1">------Assign Store------</option>
+                                    </select>    
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vehicle_number" class="form-label">Store QTY</label>
+                                    <input type="text" class="form-control" id="store_qty" name="store_qty" value="{{$product->store_qty}}" placeholder="Enter Details">
                                 </div>
                             </div>
 
@@ -224,10 +265,12 @@
                 $('#status').val('{{ $product->status }}');
                 $('#category').val('{{ $product->category }}');
                 $('#sub_category').val('{{ $product->sub_category }}');
+                $('#child_category').val('{{ $product->child_category }}');
                 $('#store').val('{{ $product->store }}');
                 $('#discount').val('{{ $product->discount }}');
                 $('#summer').val('{{ $product->summer_sale }}');
                 $('#brand').val('{{ $product->brands }}');
+                $('#assign_store').val('{{ $product->is_store }}');
             });
     </script>
 
