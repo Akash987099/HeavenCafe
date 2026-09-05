@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\PosOrder;
 use App\Models\Pos;
+use App\Models\Role;
 use App\Models\PosOrderDetail;
 use App\Models\Policy;
 use App\Models\StoreProduct;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class PosController extends Controller
 {
@@ -760,13 +762,22 @@ class PosController extends Controller
     // Sttafs
 
     public function staff(){
-        $users = $this->pos->where('user_id', Auth::guard('pos')->user()->id)->paginate(20);
+        $users = $this->pos
+            ->with('roleMaster')
+            ->where('user_id', Auth::guard('pos')->user()->id)
+            ->paginate(20);
         return view('pos.staffs', compact('users'));
         
     }
 
     public function staffAdd(){
-        return view('pos.staffs.add');
+        $roles = Role::query()
+            ->where('status', 1)
+            ->where('id', '!=', 1)
+            ->orderBy('role_name')
+            ->get();
+
+        return view('pos.staffs.add', compact('roles'));
     }
 
     public function staffSave(Request $request){
@@ -775,7 +786,8 @@ class PosController extends Controller
             'name'   => 'required|string|max:255',
             'mobile' => 'required|digits:10|unique:pos,mobile',
             'email'  => 'required|email|max:255|unique:pos,email',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => ['required', 'integer', 'not_in:1', Rule::exists('roles', 'id')->where('status', 1)],
         ]);
 
         $pos = $this->pos;
@@ -784,7 +796,7 @@ class PosController extends Controller
         $pos->email = $request->email;
         $pos->store_id = Auth::guard('pos')->user()->store_id;
         $pos->user_id = Auth::guard('pos')->user()->id;
-        $pos->role = 2;
+        $pos->role = $request->role;
         $pos->staff_id = generateStaffId();
         $pos->password = Hash::make($request->password);
 
@@ -798,10 +810,88 @@ class PosController extends Controller
 
     public function staffView($id)
     {
-        $staff = Pos::with('store')
+        $staff = Pos::with(['store', 'roleMaster'])
+            ->where('user_id', Auth::guard('pos')->id())
             ->findOrFail($id);
 
         return view('pos.staffs.view', compact('staff'));
+    }
+
+    public function staffEdit($id)
+    {
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+        $roles = Role::query()
+            ->where('status', 1)
+            ->where('id', '!=', 1)
+            ->orderBy('role_name')
+            ->get();
+
+        return view('pos.staffs.edit', compact('staff', 'roles'));
+    }
+
+    public function staffUpdate(Request $request, $id)
+    {
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'mobile' => 'required|digits:10|unique:pos,mobile,' . $staff->id,
+            'email' => 'required|email|max:255|unique:pos,email,' . $staff->id,
+            'role' => ['required', 'integer', 'not_in:1', Rule::exists('roles', 'id')->where('status', 1)],
+            'password' => 'nullable|string|min:6|confirmed',
+        ]);
+
+        $staff->name = $request->name;
+        $staff->mobile = $request->mobile;
+        $staff->email = $request->email;
+        $staff->role = $request->role;
+
+        if ($request->filled('password')) {
+            $staff->password = Hash::make($request->password);
+        }
+
+        $staff->save();
+
+        return redirect()->route('pos.staff')->with('success', 'Staff updated successfully.');
+    }
+
+    public function kitchenOrders()
+    {
+        $this->ensureKitchenUser();
+
+        $confirmedOrders = PosOrder::query()
+            ->with('details')
+            ->where('status', 'completed')
+            ->where('payment_status', 'paid');
+
+        $latestOrder = (clone $confirmedOrders)->latest('id')->first();
+        $orders = $confirmedOrders->latest('id')->paginate(20);
+
+        return view('pos.kitchen.index', compact('orders', 'latestOrder'));
+    }
+
+    public function kitchenOrderView($id)
+    {
+        $this->ensureKitchenUser();
+
+        $order = PosOrder::query()
+            ->with('details')
+            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->findOrFail($id);
+
+        return view('pos.kitchen.view', compact('order'));
+    }
+
+    private function ensureKitchenUser(): void
+    {
+        $roleName = strtolower(trim((string) optional(Auth::guard('pos')->user()->roleMaster)->role_name));
+
+        abort_unless(in_array($roleName, ['kitchen', 'rasoi'], true), 403);
     }
 
     public function policy(){

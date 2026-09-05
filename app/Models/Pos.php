@@ -16,4 +16,9 @@ class Pos extends Authenticatable
     {
         return $this->belongsTo(Store::class, 'store_id', 'id');
     }
+
+    public function roleMaster()
+    {
+        return $this->belongsTo(Role::class, 'role', 'id');
+    }
 }

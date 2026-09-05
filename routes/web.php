@@ -27,6 +27,7 @@ use App\Http\Controllers\RecommendedController;
 use App\Http\Controllers\AplusController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\OrderController;
@@ -379,6 +380,15 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
         Route::delete('delete/{id}', 'delete')->name('delete');
+    });
+
+    Route::prefix('roles')->controller(RoleController::class)->name('role.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('export', 'export')->name('export');
+        Route::get('add', 'add')->name('add');
+        Route::post('save', 'save')->name('save');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update', 'update')->name('update');
     });
 
     Route::controller(ReportController::class)->group(function () {

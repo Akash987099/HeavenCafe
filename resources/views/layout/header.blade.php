@@ -1829,9 +1829,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarMaster" role="button"
-                        aria-expanded="{{ request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarMaster">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1839,9 +1839,11 @@
                         </div>
                         <span class="nav-link-text ms-1">Master</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'show' : '' }}"
                         id="sidebarMaster">
                         <div class="side-submenu">
+                            <a class="nav-link {{ request()->routeIs('role.*') ? 'active' : '' }}"
+                                href="{{ route('role.index') }}"><i class="fas fa-user-tag"></i>Role</a>
                             <a class="nav-link {{ request()->routeIs('status.*') ? 'active' : '' }}"
                                 href="{{ route('status.index') }}"><i class="fas fa-toggle-on"></i>Status</a>
                             <a class="nav-link {{ request()->routeIs('country.*') ? 'active' : '' }}"

@@ -22,10 +22,15 @@ Route::middleware(['auth:pos'])->group(function () {
 
         Route::get('/bills', 'bills')->name('bills');
 
+        Route::get('/kitchen/orders', 'kitchenOrders')->name('kitchen.orders');
+        Route::get('/kitchen/orders/{id}', 'kitchenOrderView')->name('kitchen.orders.view');
+
         // Staffs
         Route::get('/staffs', 'staff')->name('staff');
         Route::get('/staff/add', 'staffAdd')->name('staff.add');
         Route::post('/staff/save', 'staffSave')->name('staff.save');
+        Route::get('/staff/{id}/edit', 'staffEdit')->name('staff.edit');
+        Route::post('/staff/{id}/update', 'staffUpdate')->name('staff.update');
         Route::get('/staff/{id}', 'staffView')->name('staff.view');
 
         // Poliy

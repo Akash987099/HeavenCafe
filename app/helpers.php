@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Http;
 
 use Carbon\Carbon;
 
+if (!function_exists('generateStaffId')) {
+    function generateStaffId()
+    {
+        do {
+          $staffId = rand(100000, 999999);
+        } while (Pos::where('staff_id', $staffId)->exists());
+
+        return $staffId;
+    }
+}
+
 if (!function_exists('date_formet')) {
 
     /**

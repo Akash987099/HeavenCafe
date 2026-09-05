@@ -195,6 +195,22 @@
 
                         {{-- Password --}}
                         <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                                Role <span class="text-red-500">*</span>
+                            </label>
+                            <select name="role" required
+                                class="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#128C7E]/20 focus:border-[#128C7E]">
+                                <option value="">Select role</option>
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role->id }}" {{ old('role') == $role->id ? 'selected' : '' }}>
+                                        {{ $role->role_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Password --}}
+                        <div>
 
                             <label class="block text-sm font-semibold text-slate-700 mb-2">
                                 Password

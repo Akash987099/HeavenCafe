@@ -91,6 +91,13 @@
                                 </th>
 
                                 <th
+                                    class="px-5 py-3 text-left
+                                       text-xs font-semibold
+                                       text-slate-500 uppercase">
+                                    Role
+                                </th>
+
+                                <th
                                     class="px-5 py-3 text-center
                                        text-xs font-semibold
                                        text-slate-500 uppercase">
@@ -152,6 +159,10 @@
 
                                     </td>
 
+                                    <td class="px-5 py-4 text-slate-600">
+                                        {{ optional($pos->roleMaster)->role_name ?? '-' }}
+                                    </td>
+
                                     {{-- Action --}}
                                     <td class="px-5 py-4 text-center">
                                         <a href="{{ route('pos.staff.view', $pos->id) }}"
@@ -167,6 +178,11 @@
                                                transition"
                                             title="View Bill">
                                             <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('pos.staff.edit', $pos->id) }}"
+                                            class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-[#128C7E] hover:text-white transition"
+                                            title="Edit Staff">
+                                            <i class="fas fa-pen"></i>
                                         </a>
 
                                     </td>
