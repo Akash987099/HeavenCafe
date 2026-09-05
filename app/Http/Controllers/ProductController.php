@@ -137,7 +137,7 @@ class ProductController extends Controller
     public function add()
     {
         $category = $this->category->all();
-        $sub_category = $this->sub_category->all();
+        $sub_category = $this->sub_category->with('categories')->get();
         $child_category = $this->child_category->all();
         $brand = $this->brand->all();
         $discount = $this->discount->all();
@@ -304,7 +304,7 @@ class ProductController extends Controller
         }
 
         $category = $this->category->all();
-        $sub_category = $this->sub_category->all();
+        $sub_category = $this->sub_category->with('categories')->get();
         $child_category = $this->child_category->all();
         $discount = $this->discount->all();
         $brand = $this->brand->all();

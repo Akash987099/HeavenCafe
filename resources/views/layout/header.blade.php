@@ -31,7 +31,145 @@
     <script src="{{ asset('assets/js/delete.js') }}"></script>
     <script src="{{ asset('assets/js/common.js') }}"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <style>
+        .rich-text-editor {
+            border: 1px solid #d6dce5;
+            border-radius: .45rem;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .rich-text-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .2rem;
+            padding: .4rem .5rem;
+            border-bottom: 1px solid #d6dce5;
+            background: #f8fafc;
+        }
+
+        .rich-text-toolbar button,
+        .rich-text-toolbar select {
+            min-width: 1.9rem;
+            height: 1.9rem;
+            border: 0;
+            border-radius: .25rem;
+            padding: 0 .4rem;
+            color: #344767;
+            background: transparent;
+            font-size: .78rem;
+        }
+
+        .rich-text-toolbar button:hover,
+        .rich-text-toolbar button:focus-visible,
+        .rich-text-toolbar select:hover {
+            background: #e8eef7;
+            outline: none;
+        }
+
+        .rich-text-divider {
+            width: 1px;
+            height: 1.25rem;
+            margin: 0 .15rem;
+            background: #d6dce5;
+        }
+
+        .rich-text-area {
+            min-height: 12.5rem;
+            padding: .85rem 1rem;
+            outline: none;
+            color: #344767;
+            line-height: 1.55;
+        }
+
+        .rich-text-area:focus { box-shadow: inset 0 0 0 2px rgba(23, 193, 232, .18); }
+        .rich-text-area img { max-width: 100%; height: auto; }
+    </style>
+    <script>
+        /* License-free editor adapter. It preserves existing CKEDITOR.replace() calls. */
+        window.CKEDITOR = {
+            replace: function (elementId, options) {
+                var textarea = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
+                if (!textarea || textarea.dataset.richTextReady) return;
+
+                var wrapper = document.createElement('div');
+                var toolbar = document.createElement('div');
+                var editor = document.createElement('div');
+                wrapper.className = 'rich-text-editor';
+                toolbar.className = 'rich-text-toolbar';
+                editor.className = 'rich-text-area';
+                editor.contentEditable = 'true';
+                editor.innerHTML = textarea.value;
+                editor.style.minHeight = ((options && options.height) || 200) + 'px';
+
+                function sync() { textarea.value = editor.innerHTML; }
+                function command(name, value) {
+                    editor.focus();
+                    document.execCommand(name, false, value || null);
+                    sync();
+                }
+                function button(label, title, action) {
+                    var item = document.createElement('button');
+                    item.type = 'button';
+                    item.innerHTML = label;
+                    item.title = title;
+                    item.setAttribute('aria-label', title);
+                    item.addEventListener('mousedown', function (event) { event.preventDefault(); });
+                    item.addEventListener('click', action);
+                    toolbar.appendChild(item);
+                }
+                function divider() {
+                    var item = document.createElement('span');
+                    item.className = 'rich-text-divider';
+                    toolbar.appendChild(item);
+                }
+
+                button('<b>B</b>', 'Bold', function () { command('bold'); });
+                button('<i>I</i>', 'Italic', function () { command('italic'); });
+                button('<u>U</u>', 'Underline', function () { command('underline'); });
+                button('<s>S</s>', 'Strike through', function () { command('strikeThrough'); });
+                divider();
+                button('• List', 'Bulleted list', function () { command('insertUnorderedList'); });
+                button('1. List', 'Numbered list', function () { command('insertOrderedList'); });
+                button('❝', 'Block quote', function () { command('formatBlock', 'blockquote'); });
+                divider();
+                button('↶', 'Undo', function () { command('undo'); });
+                button('↷', 'Redo', function () { command('redo'); });
+                button('🔗', 'Add link', function () {
+                    var url = window.prompt('Enter URL');
+                    if (url) command('createLink', url);
+                });
+                button('🖼', 'Add image by URL', function () {
+                    var url = window.prompt('Enter image URL');
+                    if (url) command('insertImage', url);
+                });
+                divider();
+
+                var format = document.createElement('select');
+                format.setAttribute('aria-label', 'Text format');
+                [['p', 'Paragraph'], ['h2', 'Heading 2'], ['h3', 'Heading 3'], ['h4', 'Heading 4']].forEach(function (option) {
+                    var item = document.createElement('option');
+                    item.value = option[0];
+                    item.textContent = option[1];
+                    format.appendChild(item);
+                });
+                format.addEventListener('change', function () { command('formatBlock', format.value); });
+                toolbar.appendChild(format);
+                button('Tx', 'Clear formatting', function () { command('removeFormat'); });
+
+                textarea.style.display = 'none';
+                textarea.dataset.richTextReady = 'true';
+                textarea.parentNode.insertBefore(wrapper, textarea);
+                wrapper.appendChild(toolbar);
+                wrapper.appendChild(editor);
+                editor.addEventListener('input', sync);
+                textarea.form && textarea.form.addEventListener('submit', sync);
+
+                return { getData: function () { return editor.innerHTML; }, setData: function (data) { editor.innerHTML = data || ''; sync(); }, updateElement: sync };
+            }
+        };
+    </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
@@ -1628,9 +1766,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('users.*') || request()->routeIs('client.*') || request()->routeIs('category.*') || request()->routeIs('sub_category.*') || request()->routeIs('brand.*') || request()->routeIs('discount.*') || request()->routeIs('product.*') || request()->routeIs('store.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('users.*', 'client.*', 'plateform.*', 'table.*', 'points.*', 'payment_method.*', 'card_type.*', 'courier.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarManagement" role="button"
-                        aria-expanded="{{ request()->routeIs('users.*') || request()->routeIs('client.*') || request()->routeIs('category.*') || request()->routeIs('sub_category.*') || request()->routeIs('brand.*') || request()->routeIs('discount.*') || request()->routeIs('product.*') || request()->routeIs('store.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('users.*', 'client.*', 'plateform.*', 'table.*', 'points.*', 'payment_method.*', 'card_type.*', 'courier.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarManagement">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1638,19 +1776,13 @@
                         </div>
                         <span class="nav-link-text ms-1">Management</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('users.*') || request()->routeIs('client.*') || request()->routeIs('category.*') || request()->routeIs('sub_category.*') || request()->routeIs('brand.*') || request()->routeIs('discount.*') || request()->routeIs('product.*') || request()->routeIs('store.*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('users.*', 'client.*', 'plateform.*', 'table.*', 'points.*', 'payment_method.*', 'card_type.*', 'courier.*') ? 'show' : '' }}"
                         id="sidebarManagement">
                         <div class="side-submenu">
                             <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}"
                                 href="{{ route('users.index') }}"><i class="fas fa-users"></i>Users</a>
                             <a class="nav-link {{ request()->routeIs('client.*') ? 'active' : '' }}"
                                 href="{{ route('client.index') }}"><i class="fas fa-user-tie"></i>Client</a>
-                            <a class="nav-link {{ request()->routeIs('category.*') ? 'active' : '' }}"
-                                href="{{ route('category.index') }}"><i class="fas fa-list"></i>Category</a>
-                            <a class="nav-link {{ request()->routeIs('sub_category.*') ? 'active' : '' }}"
-                                href="{{ route('sub_category.index') }}"><i class="fas fa-list-ul"></i>Sub Category</a>
-                            <a class="nav-link {{ request()->routeIs('brand.*') ? 'active' : '' }}"
-                                href="{{ route('brand.index') }}"><i class="fas fa-tags"></i>Brands</a>
                             <a class="nav-link {{ request()->routeIs('plateform.*') ? 'active' : '' }}"
                                 href="{{ route('plateform.index') }}"><i class="fas fa-globe"></i>Platforms</a>
                             <a class="nav-link {{ request()->routeIs('table.*') ? 'active' : '' }}"
@@ -1661,26 +1793,37 @@
                                 href="{{ route('payment_method.index') }}"><i class="fas fa-credit-card"></i>Payment Method</a>
                             <a class="nav-link {{ request()->routeIs('card_type.*') ? 'active' : '' }}"
                                 href="{{ route('card_type.index') }}"><i class="fas fa-credit-card"></i>Card Type</a>
-                            <a class="nav-link {{ request()->routeIs('type.*') ? 'active' : '' }}"
-                                href="{{ route('type.index') }}"><i class="fas fa-tags"></i>Type</a>
-                            <a class="nav-link {{ request()->routeIs('discount.*') ? 'active' : '' }}"
-                                href="{{ route('discount.index') }}"><i class="fas fa-percent"></i>Discount</a>
-                            <a class="nav-link {{ request()->routeIs('product.*') ? 'active' : '' }}"
-                                href="{{ route('product.index') }}"><i class="fas fa-box-open"></i>Product</a>
-                            <a class="nav-link {{ request()->routeIs('product.*') ? 'active' : '' }}"
-                                href="{{ route('product.barcode') }}"><i class="fas fa-box-open"></i>Product Barcode</a>
-                            <a class="nav-link {{ request()->routeIs('combo.*') ? 'active' : '' }}"
-                                href="{{ route('combo.index') }}"><i class="fas fa-box-open"></i>Combo Product</a>
-                            <a class="nav-link {{ request()->routeIs('store.*') ? 'active' : '' }}"
-                                href="{{ route('store.index') }}"><i class="fas fa-store"></i>Store</a>
-                            <a class="nav-link {{ request()->routeIs('attribute.*') ? 'active' : '' }}"
-                                href="{{ route('attribute.index') }}"><i class="fas fa-store"></i>Attribute</a>
-                            <a class="nav-link {{ request()->routeIs('attribute_value.*') ? 'active' : '' }}"
-                                href="{{ route('attribute_value.index') }}"><i class="fas fa-store"></i>Attribute Value</a>
-                            <a class="nav-link {{ request()->routeIs('offer.*') ? 'active' : '' }}"
-                                href="{{ route('offer.index') }}"><i class="fas fa-tags"></i>Offer</a>
                             <a class="nav-link {{ request()->routeIs('courier.*') ? 'active' : '' }}"
-                                href="{{ route('courier.index') }}"><i class="fas fa-tags"></i>Courier</a>
+                                href="{{ route('courier.index') }}"><i class="fas fa-truck"></i>Courier</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? '' : 'collapsed' }}"
+                        data-bs-toggle="collapse" href="#sidebarCatalog" role="button"
+                        aria-expanded="{{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? 'true' : 'false' }}"
+                        aria-controls="sidebarCatalog">
+                        <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-boxes-stacked text-dark"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Catalog</span>
+                    </a>
+                    <div class="collapse {{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? 'show' : '' }}" id="sidebarCatalog">
+                        <div class="side-submenu">
+                            <a class="nav-link {{ request()->routeIs('category.*') ? 'active' : '' }}" href="{{ route('category.index') }}"><i class="fas fa-list"></i>Category</a>
+                            <a class="nav-link {{ request()->routeIs('sub_category.*') ? 'active' : '' }}" href="{{ route('sub_category.index') }}"><i class="fas fa-list-ul"></i>Sub Category</a>
+                            <a class="nav-link {{ request()->routeIs('brand.*') ? 'active' : '' }}" href="{{ route('brand.index') }}"><i class="fas fa-tags"></i>Brands</a>
+                            <a class="nav-link {{ request()->routeIs('type.*') ? 'active' : '' }}" href="{{ route('type.index') }}"><i class="fas fa-tag"></i>Type</a>
+                            <a class="nav-link {{ request()->routeIs('attribute.*') ? 'active' : '' }}" href="{{ route('attribute.index') }}"><i class="fas fa-sliders"></i>Attributes</a>
+                            <a class="nav-link {{ request()->routeIs('attribute_value.*') ? 'active' : '' }}" href="{{ route('attribute_value.index') }}"><i class="fas fa-list-check"></i>Attribute Values</a>
+                            <a class="nav-link {{ request()->routeIs('product.*') && !request()->routeIs('product.barcode', 'product.barcode_print') ? 'active' : '' }}" href="{{ route('product.index') }}"><i class="fas fa-box-open"></i>Products</a>
+                            <a class="nav-link {{ request()->routeIs('product.barcode', 'product.barcode_print') ? 'active' : '' }}" href="{{ route('product.barcode') }}"><i class="fas fa-barcode"></i>Product Barcodes</a>
+                            <a class="nav-link {{ request()->routeIs('combo.*') ? 'active' : '' }}" href="{{ route('combo.index') }}"><i class="fas fa-boxes-packing"></i>Combo Products</a>
+                            <a class="nav-link {{ request()->routeIs('store.*') ? 'active' : '' }}" href="{{ route('store.index') }}"><i class="fas fa-store"></i>Stores</a>
+                            <a class="nav-link {{ request()->routeIs('discount.*') ? 'active' : '' }}" href="{{ route('discount.index') }}"><i class="fas fa-percent"></i>Discounts</a>
+                            <a class="nav-link {{ request()->routeIs('offer.*') ? 'active' : '' }}" href="{{ route('offer.index') }}"><i class="fas fa-tags"></i>Offers</a>
+                            <a class="nav-link {{ request()->routeIs('tax.*') ? 'active' : '' }}" href="{{ route('tax.index') }}"><i class="fas fa-receipt"></i>Taxes</a>
                         </div>
                     </div>
                 </li>
@@ -1718,9 +1861,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('status.*') || request()->routeIs('posuser.*') || request()->routeIs('village.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('pos_user.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarPos" role="button"
-                        aria-expanded="{{ request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('pos_user.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarPos">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1728,23 +1871,23 @@
                         </div>
                         <span class="nav-link-text ms-1">Pos Management</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('pos_user.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('pos_user.*') ? 'show' : '' }}"
                         id="sidebarPos">
                         <div class="side-submenu">
-                            <a class="nav-link {{ request()->routeIs('pos_user.*') ? 'active' : '' }}"
+                            <a class="nav-link {{ request()->routeIs('pos_user.index') ? 'active' : '' }}"
                                 href="{{ route('pos_user.index') }}"><i class="fas fa-user"></i>Pos</a>
-                            <a class="nav-link {{ request()->routeIs('pos_user.*') ? 'active' : '' }}"
+                            <a class="nav-link {{ request()->routeIs('pos_user.store-order') ? 'active' : '' }}"
                                 href="{{ route('pos_user.store-order') }}"><i class="fas fa-user"></i>Orders</a>
-                            <a class="nav-link {{ request()->routeIs('pos_user.*') ? 'active' : '' }}"
+                            <a class="nav-link {{ request()->routeIs('pos_user.orders') ? 'active' : '' }}"
                                 href="{{ route('pos_user.orders') }}"><i class="fas fa-user"></i>Pos Orders</a>
                         </div>
                     </div>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('leads.*') || request()->routeIs('leads.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('leads.*', 'cards.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarLeads" role="button"
-                        aria-expanded="{{ request()->routeIs('leads.*') || request()->routeIs('leads.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('leads.*', 'cards.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarLeads">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1752,7 +1895,7 @@
                         </div>
                         <span class="nav-link-text ms-1">Leads</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('leads.*') || request()->routeIs('leads.*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('leads.*', 'cards.*') ? 'show' : '' }}"
                         id="sidebarLeads">
                         <div class="side-submenu">
                             <a class="nav-link {{ request()->routeIs('leads.*') ? 'active' : '' }}"
@@ -1764,7 +1907,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('summer.index') }}">
+                    <a class="nav-link {{ request()->routeIs('summer.*') ? 'active' : '' }}" href="{{ route('summer.index') }}">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                             <i class="fas fa-sun text-dark"></i>
@@ -1774,9 +1917,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('supplier.*') || request()->is('buyer*') || request()->is('demand*') || request()->is('sell*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('supplier.*', 'buyer.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarTrading" role="button"
-                        aria-expanded="{{ request()->routeIs('supplier.*') || request()->is('buyer*') || request()->is('demand*') || request()->is('sell*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('supplier.*', 'buyer.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarTrading">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1784,12 +1927,12 @@
                         </div>
                         <span class="nav-link-text ms-1">Trading</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('supplier.*') || request()->is('buyer*') || request()->is('demand*') || request()->is('sell*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('supplier.*', 'buyer.*') ? 'show' : '' }}"
                         id="sidebarTrading">
                         <div class="side-submenu">
                             <a class="nav-link {{ request()->routeIs('supplier.*') ? 'active' : '' }}"
                                 href="{{ route('supplier.index') }}"><i class="fas fa-truck-field"></i>Supplier</a>
-                            <a class="nav-link" href="{{ route('buyer.index') }}"><i class="fas fa-user-tie"></i>Buyer</a>
+                            <a class="nav-link {{ request()->routeIs('buyer.*') ? 'active' : '' }}" href="{{ route('buyer.index') }}"><i class="fas fa-user-tie"></i>Buyer</a>
                             <a class="nav-link" href="#"><i class="fas fa-bullhorn"></i>Demand</a>
                             <a class="nav-link" href="#"><i class="fas fa-cart-shopping"></i>Sell</a>
                         </div>
@@ -1797,9 +1940,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('order.*') || request()->is('buyer*') || request()->is('demand*') || request()->is('sell*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('order.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarOrder" role="button"
-                        aria-expanded="{{ request()->routeIs('order.*') || request()->is('buyer*') || request()->is('demand*') || request()->is('sell*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('order.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarOrder">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1807,50 +1950,22 @@
                         </div>
                         <span class="nav-link-text ms-1">Order Management</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('order.*') || request()->is('barcode*') || request()->is('demand*') || request()->is('sell*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('order.*') ? 'show' : '' }}"
                         id="sidebarOrder">
                         <div class="side-submenu">
-                            <a class="nav-link {{ request()->routeIs('order.*') ? 'active' : '' }}"
+                            <a class="nav-link {{ request()->routeIs('order.index', 'order.export', 'order.status', 'order.delivery_boy', 'order.invoice') ? 'active' : '' }}"
                                 href="{{ route('order.index') }}"><i class="fas fa-truck-field"></i>Order</a>
 
-                            <a class="nav-link {{ request()->routeIs('barcodes.*') ? 'active' : '' }}"
+                            <a class="nav-link {{ request()->routeIs('order.barcodes', 'order.barcode', 'order.barcode_print') ? 'active' : '' }}"
                                 href="{{ route('order.barcodes') }}"><i class="fas fa-truck-field"></i>Barcode</a>
                         </div>
                     </div>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('tax.index') }}">
-                        <div
-                            class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <svg width="12px" height="12px" viewBox="0 0 42 42" version="1.1"
-                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                                <title>office</title>
-                                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                                    <g transform="translate(-1869.000000, -293.000000)" fill="#FFFFFF"
-                                        fill-rule="nonzero">
-                                        <g transform="translate(1716.000000, 291.000000)">
-                                            <g id="office" transform="translate(153.000000, 2.000000)">
-                                                <path class="color-background opacity-6"
-                                                    d="M12.25,17.5 L8.75,17.5 L8.75,1.75 C8.75,0.78225 9.53225,0 10.5,0 L31.5,0 C32.46775,0 33.25,0.78225 33.25,1.75 L33.25,12.25 L29.75,12.25 L29.75,3.5 L12.25,3.5 L12.25,17.5 Z">
-                                                </path>
-                                                <path class="color-background"
-                                                    d="M40.25,14 L24.5,14 C23.53225,14 22.75,14.78225 22.75,15.75 L22.75,38.5 L19.25,38.5 L19.25,22.75 C19.25,21.78225 18.46775,21 17.5,21 L1.75,21 C0.78225,21 0,21.78225 0,22.75 L0,40.25 C0,41.21775 0.78225,42 1.75,42 L40.25,42 C41.21775,42 42,41.21775 42,40.25 L42,15.75 C42,14.78225 41.21775,14 40.25,14 Z M12.25,36.75 L7,36.75 L7,33.25 L12.25,33.25 L12.25,36.75 Z M12.25,29.75 L7,29.75 L7,26.25 L12.25,26.25 L12.25,29.75 Z M35,36.75 L29.75,36.75 L29.75,33.25 L35,33.25 L35,36.75 Z M35,29.75 L29.75,29.75 L29.75,26.25 L35,26.25 L35,29.75 Z M35,22.75 L29.75,22.75 L29.75,19.25 L35,19.25 L35,22.75 Z">
-                                                </path>
-                                            </g>
-                                        </g>
-                                    </g>
-                                </g>
-                            </svg>
-                        </div>
-                        <span class="nav-link-text ms-1">Taxes</span>
-                    </a>
-                </li>
-
                 <li class="nav-item mt-3">
-                    <a class="nav-link {{ request()->routeIs('setting.*') || request()->routeIs('faq.*') || request()->routeIs('cms.*') || request()->routeIs('slider.*') || request()->routeIs('promotional.*') || request()->routeIs('email_template.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('setting.*', 'faq.*', 'cms.*', 'slider.*', 'promotional.*', 'email_template.*', 'policy.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarSettings" role="button"
-                        aria-expanded="{{ request()->routeIs('setting.*') || request()->routeIs('faq.*') || request()->routeIs('cms.*') || request()->routeIs('slider.*') || request()->routeIs('promotional.*') || request()->routeIs('email_template.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('setting.*', 'faq.*', 'cms.*', 'slider.*', 'promotional.*', 'email_template.*', 'policy.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarSettings">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1858,7 +1973,7 @@
                         </div>
                         <span class="nav-link-text ms-1">Settings</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('setting.*') || request()->routeIs('faq.*') || request()->routeIs('cms.*') || request()->routeIs('slider.*') || request()->routeIs('promotional.*') || request()->routeIs('email_template.*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('setting.*', 'faq.*', 'cms.*', 'slider.*', 'promotional.*', 'email_template.*', 'policy.*') ? 'show' : '' }}"
                         id="sidebarSettings">
                         <div class="side-submenu">
                             <a class="nav-link {{ request()->routeIs('setting.*') ? 'active' : '' }}"
@@ -1880,17 +1995,17 @@
                 </li>
 
                 <li class="nav-item mt-3">
-                    <a class="nav-link collapsed" data-bs-toggle="collapse" href="#sidebarReports" role="button"
-                        aria-expanded="false" aria-controls="sidebarReports">
+                    <a class="nav-link {{ request()->routeIs('transaction') ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#sidebarReports" role="button"
+                        aria-expanded="{{ request()->routeIs('transaction') ? 'true' : 'false' }}" aria-controls="sidebarReports">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                             <i class="fas fa-chart-line text-dark"></i>
                         </div>
                         <span class="nav-link-text ms-1">Reports</span>
                     </a>
-                    <div class="collapse" id="sidebarReports">
+                    <div class="collapse {{ request()->routeIs('transaction') ? 'show' : '' }}" id="sidebarReports">
                         <div class="side-submenu">
-                            <a class="nav-link" href="{{ route('transaction') }}">
+                            <a class="nav-link {{ request()->routeIs('transaction') ? 'active' : '' }}" href="{{ route('transaction') }}">
                                 <i class="fas fa-receipt"></i>Transaction
                             </a>
                         </div>

@@ -117,7 +117,7 @@
                                     <select type="text" class="form-control" id="category" name="category" placeholder="Enter Details">
                                         <option value="">Select Category</option>
                                         @foreach ($category as $key => $item)
-                                            <option value="{{$item->id}}">{{$item->name}}</option>
+                                            <option value="{{$item->id}}" @selected(old('category', $product->category) == $item->id)>{{$item->name}}</option>
                                         @endforeach
                                     </select>    
                                 </div>
@@ -129,7 +129,7 @@
                                     <select type="text" class="form-control" id="sub_category" name="sub_category" placeholder="Enter Details">
                                         <option value="">------Select sub Category------</option>
                                         @foreach ($sub_category as $key => $item)
-                                            <option value="{{$item->id}}" data-id="{{$item->category_id}}">{{$item->name}}</option>
+                                            <option value="{{$item->id}}" data-category-ids='@json($item->categories->pluck('id')->whenEmpty(fn () => collect([$item->category_id])))' @selected(old('sub_category', $product->sub_category) == $item->id)>{{$item->name}}</option>
                                         @endforeach
                                     </select>    
                                 </div>
@@ -141,7 +141,7 @@
                                     <select type="text" class="form-control" id="child_category" name="child_category" placeholder="Enter Details">
                                         <option value="">------Select sub Category------</option>
                                         @foreach ($child_category as $key => $item)
-                                            <option value="{{$item->id}}" data-id="{{$item->sub_category_id}}">{{$item->name}}</option>
+                                            <option value="{{$item->id}}" data-sub-category-id="{{$item->sub_category_id}}" @selected(old('child_category', $product->child_category) == $item->id)>{{$item->name}}</option>
                                         @endforeach
                                     </select>    
                                 </div>
@@ -273,5 +273,40 @@
                 $('#assign_store').val('{{ $product->is_store }}');
             });
     </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const category = document.getElementById('category');
+        const subCategory = document.getElementById('sub_category');
+        const childCategory = document.getElementById('child_category');
+
+        const filterOptions = function (select, attribute, parentValue) {
+            Array.from(select.options).forEach(function (option, index) {
+                if (index === 0) return;
+                const ids = attribute === 'data-category-ids'
+                    ? JSON.parse(option.getAttribute(attribute) || '[]')
+                    : [option.getAttribute(attribute)];
+                const normalizedIds = ids.map(String);
+                option.hidden = !parentValue || !normalizedIds.includes(parentValue);
+                option.disabled = option.hidden;
+            });
+        };
+
+        const updateChildCategories = function () {
+            filterOptions(childCategory, 'data-sub-category-id', subCategory.value);
+            if (childCategory.selectedOptions[0] && childCategory.selectedOptions[0].hidden) childCategory.value = '';
+        };
+
+        const updateSubCategories = function () {
+            filterOptions(subCategory, 'data-category-ids', category.value);
+            if (subCategory.selectedOptions[0] && subCategory.selectedOptions[0].hidden) subCategory.value = '';
+            updateChildCategories();
+        };
+
+        category.addEventListener('change', updateSubCategories);
+        subCategory.addEventListener('change', updateChildCategories);
+        updateSubCategories();
+    });
+</script>
 
 @endsection

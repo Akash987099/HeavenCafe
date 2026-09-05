@@ -134,6 +134,7 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('save', 'save')->name('save');
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
+        Route::delete('delete/{id}', 'delete')->name('delete');
     });
 
     Route::prefix('child/category')->controller(ChildCategoryController::class)->name('child_category.')->group(function () {
