@@ -5,5 +5,8 @@
     </div>
   </main>
   <div class="fixed inset-0 pointer-events-none z-[-1] bg-orange-50"></div>
+  @if (Auth::guard('pos')->user()->role == 3)
+    @include('pos.kitchen.partials.global-alert')
+  @endif
 </body>
 </html>

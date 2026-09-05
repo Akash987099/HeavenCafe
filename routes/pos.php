@@ -23,7 +23,9 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::get('/bills', 'bills')->name('bills');
 
         Route::get('/kitchen/orders', 'kitchenOrders')->name('kitchen.orders');
+        Route::get('/kitchen/alerts', 'kitchenAlerts')->name('kitchen.alerts');
         Route::get('/kitchen/orders/{id}', 'kitchenOrderView')->name('kitchen.orders.view');
+        Route::post('/kitchen/orders/{id}/delivered', 'kitchenMarkDelivered')->name('kitchen.orders.delivered');
 
         // Staffs
         Route::get('/staffs', 'staff')->name('staff');

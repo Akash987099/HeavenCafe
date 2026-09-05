@@ -14,6 +14,18 @@
 
     <!-- Navigation -->
     <nav class="flex-1 space-y-1.5">
+        @if (Auth::guard('pos')->user()->role == 3)
+            <a href="{{ route('pos.index') }}"
+                class="sidebar-link {{ request()->routeIs('pos.index') ? 'active' : '' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600">
+                <i class="fas fa-th-large w-5 text-center"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ route('pos.kitchen.orders') }}"
+                class="sidebar-link {{ request()->routeIs('pos.kitchen.*') ? 'active' : '' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600">
+                <i class="fas fa-utensils w-5 text-center"></i>
+                <span>Kitchen Orders</span>
+            </a>
+        @else
 
         <a href="{{ route('pos.index') }}"
             class="sidebar-link {{ request()->routeIs('pos.index') ? 'active' : '' }}
@@ -45,15 +57,6 @@
 
                 <span>Staffs</span>
 
-            </a>
-        @endif
-
-        @php($posRoleName = strtolower(trim((string) optional(Auth::guard('pos')->user()->roleMaster)->role_name)))
-        @if (in_array($posRoleName, ['kitchen', 'rasoi'], true))
-            <a href="{{ route('pos.kitchen.orders') }}"
-                class="sidebar-link {{ request()->routeIs('pos.kitchen.*') ? 'active' : '' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600">
-                <i class="fas fa-utensils w-5 text-center"></i>
-                <span>Kitchen Orders</span>
             </a>
         @endif
 
@@ -119,6 +122,7 @@
 
             <span>Settings</span>
         </a>
+        @endif
 
     </nav>
 
@@ -171,6 +175,18 @@
 
     <!-- Mobile Navigation -->
     <nav class="flex-1 p-4 space-y-2">
+        @if (Auth::guard('pos')->user()->role == 3)
+            <a href="{{ route('pos.index') }}"
+                class="sidebar-link {{ request()->routeIs('pos.index') ? 'active' : '' }} flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                <i class="fas fa-th-large w-5 text-center"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ route('pos.kitchen.orders') }}"
+                class="sidebar-link {{ request()->routeIs('pos.kitchen.*') ? 'active' : '' }} flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                <i class="fas fa-utensils w-5 text-center"></i>
+                <span>Kitchen Orders</span>
+            </a>
+        @else
 
         <a href="{{ route('pos.index') }}"
             class="sidebar-link {{ request()->routeIs('pos.index') ? 'active' : '' }}
@@ -199,15 +215,6 @@
 
                 <span>Staffs</span>
 
-            </a>
-        @endif
-
-        @php($posRoleName = strtolower(trim((string) optional(Auth::guard('pos')->user()->roleMaster)->role_name)))
-        @if (in_array($posRoleName, ['kitchen', 'rasoi'], true))
-            <a href="{{ route('pos.kitchen.orders') }}"
-                class="sidebar-link {{ request()->routeIs('pos.kitchen.*') ? 'active' : '' }} flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
-                <i class="fas fa-utensils w-5 text-center"></i>
-                <span>Kitchen Orders</span>
             </a>
         @endif
 
@@ -256,6 +263,7 @@
             <i class="fas fa-cog w-5 text-center"></i>
             <span>Settings</span>
         </a>
+        @endif
 
     </nav>
 

@@ -38,6 +38,10 @@ class PosController extends Controller
     {
         $user = Auth::guard('pos')->user();
 
+        if ((int) $user->role === 3) {
+            return $this->kitchenDashboard();
+        }
+
         // Manager ke staff IDs
         $staffIDs = $this->staffID($user->id);
 
@@ -292,7 +296,7 @@ class PosController extends Controller
 
                 'grand_total' => $grandTotal,
 
-                'status' => 'completed',
+                'status' => 'pending',
 
             ]);
 
@@ -865,8 +869,7 @@ class PosController extends Controller
 
         $confirmedOrders = PosOrder::query()
             ->with('details')
-            ->where('status', 'completed')
-            ->where('payment_status', 'paid');
+            ->where('status', 'completed');
 
         $latestOrder = (clone $confirmedOrders)->latest('id')->first();
         $orders = $confirmedOrders->latest('id')->paginate(20);
@@ -881,17 +884,50 @@ class PosController extends Controller
         $order = PosOrder::query()
             ->with('details')
             ->where('status', 'completed')
-            ->where('payment_status', 'paid')
             ->findOrFail($id);
 
         return view('pos.kitchen.view', compact('order'));
     }
 
+    public function kitchenMarkDelivered($id)
+    {
+        $this->ensureKitchenUser();
+
+        $order = PosOrder::query()
+            ->where('status', 'completed')
+            ->findOrFail($id);
+
+        $order->update(['status' => 'delivered']);
+
+        return redirect()->route('pos.kitchen.orders')->with('success', 'Order marked as delivered.');
+    }
+
+    public function kitchenAlerts()
+    {
+        $this->ensureKitchenUser();
+
+        return response()->json(['orders' => PosOrder::query()
+            ->where('status', 'completed')
+            ->latest('id')
+            ->get(['id', 'order_number'])]);
+    }
+
+    private function kitchenDashboard()
+    {
+        $pendingOrders = PosOrder::query()
+            ->with('details')
+            ->where('status', 'completed')
+            ->latest('id')
+            ->paginate(20);
+
+        $latestOrder = $pendingOrders->first();
+
+        return view('pos.kitchen.dashboard', compact('pendingOrders', 'latestOrder'));
+    }
+
     private function ensureKitchenUser(): void
     {
-        $roleName = strtolower(trim((string) optional(Auth::guard('pos')->user()->roleMaster)->role_name));
-
-        abort_unless(in_array($roleName, ['kitchen', 'rasoi'], true), 403);
+        abort_unless((int) Auth::guard('pos')->user()->role === 3, 403);
     }
 
     public function policy(){
