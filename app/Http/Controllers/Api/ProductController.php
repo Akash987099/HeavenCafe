@@ -51,9 +51,9 @@ class ProductController extends Controller
                             'products.brand_name',
                             'discounts.name as discount',
                             'brands.name as brand'
-                        )
-                        ->orderByRaw('CASE WHEN products.ac_price > 0 AND products.ac_price >= products.price THEN ((products.ac_price - products.price) / products.ac_price) ELSE 0 END DESC')
-                        ->orderBy('products.id', 'desc');
+                        );
+
+                    $this->orderByHighestDiscount($query);
                 }])
                 ->select('id', 'name', 'position', 'image as banner')
                 ->whereNotNull('position')
@@ -125,6 +125,8 @@ class ProductController extends Controller
                     'products.type_value',
                     'products.brand_name'
                 )
+                ->orderByRaw($this->discountOrderSql())
+                ->orderBy('products.id', 'desc')
                 ->get();
 
             $products->each(function ($product) {
@@ -242,6 +244,8 @@ class ProductController extends Controller
                     'products.type_value',
                     'products.brand_name'
                 )
+                ->orderByRaw($this->discountOrderSql())
+                ->orderBy('products.id', 'desc')
                 ->get();
 
             $products->each(function ($product) {
@@ -326,6 +330,8 @@ class ProductController extends Controller
                 'products.type_value',
                 'products.brand_name'
             )
+                ->orderByRaw($this->discountOrderSql())
+                ->orderBy('products.id', 'desc')
                 ->get();
 
             $products->each(function ($product) {
@@ -637,6 +643,8 @@ class ProductController extends Controller
                 'hsn_code as hsn',
                 'description'
             )
+            ->orderByRaw($this->discountOrderSql())
+            ->orderBy('products.id', 'desc')
             ->get();
 
         $products->each(function ($product) {
@@ -665,6 +673,8 @@ class ProductController extends Controller
                 'hsn_code as hsn',
                 'description'
             )
+            ->orderByRaw($this->discountOrderSql())
+            ->orderBy('products.id', 'desc')
             ->get();
 
         $products->each(function ($product) {
@@ -673,6 +683,17 @@ class ProductController extends Controller
         });
 
         return $products;
+    }
+
+    private function orderByHighestDiscount($query): void
+    {
+        $query->orderByRaw($this->discountOrderSql())
+            ->orderBy('products.id', 'desc');
+    }
+
+    private function discountOrderSql(): string
+    {
+        return 'CASE WHEN products.ac_price > 0 AND products.ac_price >= products.price THEN ((products.ac_price - products.price) / products.ac_price) ELSE 0 END DESC';
     }
 
     public function search(Request $request)
@@ -704,6 +725,8 @@ class ProductController extends Controller
                     'brands.name as brand',
                     'discounts.name as discount'
                 )
+                ->orderByRaw($this->discountOrderSql())
+                ->orderBy('products.id', 'desc')
                 ->limit(10) // 🔥 important for live search
                 ->get();
 
