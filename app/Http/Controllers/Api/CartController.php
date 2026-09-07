@@ -98,7 +98,7 @@ class CartController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Product is out of stock'
-            ], 404);
+            ], 200);
         }
 
         $discountprice = 0;
