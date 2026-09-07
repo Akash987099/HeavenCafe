@@ -248,6 +248,11 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'required|image',
+            'status' => 'required|in:active,in_active',
+            'price' => 'required|numeric|min:0|lte:ac_price',
+            'ac_price' => 'required|numeric|min:0',
+            'in_stock' => 'required|boolean',
+            'stock' => 'required|integer|min:0',
         ]);
 
         $awbNumber = $this->generateUniqueAwb();
@@ -259,11 +264,12 @@ class ProductController extends Controller
         $product = $this->product;
         $product->name = $request->name;
         $product->sku_product_id = $awbNumber;
-        $product->brand_name = $request->brand_name;
         $product->status = $request->status;
         $product->price = $request->price;
         $product->slug = $request->slug;
         $product->ac_price = $request->ac_price;
+        $product->in_stock = $request->boolean('in_stock');
+        $product->stock = $request->stock;
         $product->sku_code = $request->sku_code;
         $product->hsn_code = $request->hsn_code;
         $product->tags = $request->tags;
@@ -319,6 +325,11 @@ class ProductController extends Controller
             'id'    => 'required|exists:products,id',
             'name'  => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp',
+            'status' => 'required|in:active,in_active',
+            'price' => 'required|numeric|min:0|lte:ac_price',
+            'ac_price' => 'required|numeric|min:0',
+            'in_stock' => 'required|boolean',
+            'stock' => 'required|integer|min:0',
         ]);
 
         $product = $this->product->find($request->id);
@@ -330,8 +341,9 @@ class ProductController extends Controller
         $product->name = $request->name;
         $product->status = $request->status;
         $product->price = $request->price;
-        $product->brand_name = $request->brand_name;
         $product->ac_price = $request->ac_price;
+        $product->in_stock = $request->boolean('in_stock');
+        $product->stock = $request->stock;
         $product->sku_code = $request->sku_code;
         $product->hsn_code = $request->hsn_code;
         $product->tags = $request->tags;

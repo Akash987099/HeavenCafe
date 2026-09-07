@@ -33,13 +33,6 @@
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="vehicle_name" class="form-label">Brand Name</label>
-                                    <input type="text" class="form-control" id="brand_name" name="brand_name" value="{{$product->brand_name}}" placeholder="Enter Details" required>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-group">
                                     <label for="vehicle_number" class="form-label">Image</label>
                                     <input type="file" class="form-control" id="image" name="image" placeholder="Enter Details">
                                 </div>
@@ -63,8 +56,8 @@
                                 <div class="form-group">
                                     <label for="vehicle_name" class="form-label">Status</label>
                                     <select type="text" class="form-control" id="status" name="status" placeholder="Enter Details">
-                                        <option value="active">Active</option>
-                                        <option value="in_active">In Active</option>
+                                        <option value="active" @selected(old('status', $product->status) === 'active')>Active</option>
+                                        <option value="in_active" @selected(old('status', $product->status) === 'in_active')>In Active</option>
                                     </select>    
                                 </div>
                             </div>
@@ -72,14 +65,31 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="vehicle_number" class="form-label">Price</label>
-                                    <input type="text" class="form-control" id="price" value="{{$product->price}}" name="price" placeholder="Enter Details" required>
+                                    <input type="number" min="0" step="0.01" class="form-control" id="price" value="{{old('price', $product->price)}}" name="price" placeholder="Enter Details" required>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="vehicle_number" class="form-label">Actual Price</label>
-                                    <input type="text" class="form-control" id="ac_price" name="ac_price" value="{{$product->ac_price}}" placeholder="Enter Details" required>
+                                    <input type="number" min="0" step="0.01" class="form-control" id="ac_price" name="ac_price" value="{{old('ac_price', $product->ac_price)}}" placeholder="Enter Details" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="in_stock" class="form-label">In Stock</label>
+                                    <select class="form-control" id="in_stock" name="in_stock">
+                                        <option value="1" @selected(old('in_stock', $product->in_stock) == 1)>Yes</option>
+                                        <option value="0" @selected(old('in_stock', $product->in_stock) == 0)>No</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="stock" class="form-label">Stock</label>
+                                    <input type="number" min="0" step="1" class="form-control" id="stock" name="stock" value="{{old('stock', $product->stock)}}" placeholder="Enter Details" required>
                                 </div>
                             </div>
 
@@ -276,6 +286,17 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const price = document.getElementById('price');
+        const actualPrice = document.getElementById('ac_price');
+
+        const validatePrice = function () {
+            const invalid = price.value !== '' && actualPrice.value !== '' && Number(price.value) > Number(actualPrice.value);
+            price.setCustomValidity(invalid ? 'Price cannot be greater than Actual Price.' : '');
+        };
+
+        price.addEventListener('input', validatePrice);
+        actualPrice.addEventListener('input', validatePrice);
+
         const category = document.getElementById('category');
         const subCategory = document.getElementById('sub_category');
         const childCategory = document.getElementById('child_category');
