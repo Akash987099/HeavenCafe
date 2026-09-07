@@ -647,12 +647,13 @@ class ProductController extends Controller
             ->orderBy('products.id', 'desc')
             ->get();
 
-        $products->each(function ($product) {
-            $product->url = Str::slug($product->name) . '-' . $product->id;
-            // unset($product->id);
-        });
+        return $products->map(function ($product) {
+            $item = $product->toArray();
+            $item['id'] = $product->getKey();
+            $item['url'] = Str::slug($product->name) . '-' . $product->getKey();
 
-        return $products;
+            return $item;
+        })->values();
     }
 
     private function categorySubcategoryProducts($category, $subcategory, $id)
@@ -677,12 +678,13 @@ class ProductController extends Controller
             ->orderBy('products.id', 'desc')
             ->get();
 
-        $products->each(function ($product) {
-            $product->url = Str::slug($product->name) . '-' . $product->id;
-            unset($product->id);
-        });
+        return $products->map(function ($product) {
+            $item = $product->toArray();
+            $item['id'] = $product->getKey();
+            $item['url'] = Str::slug($product->name) . '-' . $product->getKey();
 
-        return $products;
+            return $item;
+        })->values();
     }
 
     private function orderByHighestDiscount($query): void
