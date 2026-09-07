@@ -630,18 +630,31 @@ class ProductController extends Controller
             return collect();
         }
 
-        $products = Product::whereIn('id', $idsArray)
-            ->where('id', '!=', $id)
+        $products = Product::leftJoin('discounts', 'discounts.id', '=', 'products.discount')
+            ->leftJoin('brands', 'brands.id', '=', 'products.brands')
+            ->whereIn('products.id', $idsArray)
+            ->where('products.id', '!=', $id)
             ->select(
-                'id',
-                'name',
-                'sku_code as sku',
-                'brand_name',
-                'image',
-                'price',
-                'ac_price',
-                'hsn_code as hsn',
-                'description'
+                'products.id',
+                'products.name',
+                'products.sku_code as sku',
+                'products.hsn_code as hsn',
+                'products.brand_name',
+                'products.image',
+                'products.price',
+                'products.ac_price',
+                'products.stock',
+                'products.in_stock',
+                'products.short_description',
+                'products.description',
+                'products.summer_id',
+                'products.slug',
+                'products.type',
+                'products.type_value',
+                'products.category',
+                'products.product_type',
+                'discounts.name as discount',
+                'brands.name as brand'
             )
             ->orderByRaw($this->discountOrderSql())
             ->orderBy('products.id', 'desc')
@@ -658,21 +671,34 @@ class ProductController extends Controller
 
     private function categorySubcategoryProducts($category, $subcategory, $id)
     {
-        $products = Product::where('id', '!=', $id)
+        $products = Product::leftJoin('discounts', 'discounts.id', '=', 'products.discount')
+            ->leftJoin('brands', 'brands.id', '=', 'products.brands')
+            ->where('products.id', '!=', $id)
             ->where(function ($query) use ($category, $subcategory) {
-                $query->where('category', $category)
-                    ->orWhere('sub_category', $subcategory);
+                $query->where('products.category', $category)
+                    ->orWhere('products.sub_category', $subcategory);
             })
             ->select(
-                'id',
-                'name',
-                'sku_code as sku',
-                'brand_name',
-                'image',
-                'price',
-                'ac_price',
-                'hsn_code as hsn',
-                'description'
+                'products.id',
+                'products.name',
+                'products.sku_code as sku',
+                'products.hsn_code as hsn',
+                'products.brand_name',
+                'products.image',
+                'products.price',
+                'products.ac_price',
+                'products.stock',
+                'products.in_stock',
+                'products.short_description',
+                'products.description',
+                'products.summer_id',
+                'products.slug',
+                'products.type',
+                'products.type_value',
+                'products.category',
+                'products.product_type',
+                'discounts.name as discount',
+                'brands.name as brand'
             )
             ->orderByRaw($this->discountOrderSql())
             ->orderBy('products.id', 'desc')
