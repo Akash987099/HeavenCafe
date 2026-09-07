@@ -51,7 +51,9 @@ class ProductController extends Controller
                             'products.brand_name',
                             'discounts.name as discount',
                             'brands.name as brand'
-                        );
+                        )
+                        ->orderByRaw('CASE WHEN products.ac_price > 0 AND products.ac_price >= products.price THEN ((products.ac_price - products.price) / products.ac_price) ELSE 0 END DESC')
+                        ->orderBy('products.id', 'desc');
                 }])
                 ->select('id', 'name', 'position', 'image as banner')
                 ->whereNotNull('position')
