@@ -649,7 +649,7 @@ class ProductController extends Controller
 
         $products->each(function ($product) {
             $product->url = Str::slug($product->name) . '-' . $product->id;
-            unset($product->id);
+            // unset($product->id);
         });
 
         return $products;
