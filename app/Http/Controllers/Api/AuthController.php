@@ -73,14 +73,14 @@ class AuthController extends Controller
             'password'     => Hash::make($request->password),
         ]);
 
-        $this->wallet->create([
-            'user_id' => $user->id,
-            'type' => 'credit',
-            'points' => 50,
-            'is_processed' => 1,
-            'description' => 'Welcome bonus for new registration',
-            'expiry_date' => Carbon::now()->addDays(28),
-        ]);
+        // $this->wallet->create([
+        //     'user_id' => $user->id,
+        //     'type' => 'credit',
+        //     'points' => 50,
+        //     'is_processed' => 1,
+        //     'description' => 'Welcome bonus for new registration',
+        //     'expiry_date' => Carbon::now()->addDays(28),
+        // ]);
 
         $this->notification->create([
             'user_id' => $user->id,
