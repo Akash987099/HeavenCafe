@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Notification;
 use App\Models\Wallet;
 use App\Models\Address;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -33,6 +34,76 @@ class UserController extends Controller
             'status' => true,
             'points' => $user->wallet_points,
         ]);
+    }
+
+    /**
+     * Convert loyalty points into wallet balance.
+     *
+     * The current conversion rate is intentionally fixed at 1 point = Rs. 1.
+     */
+    public function redeemWallet(Request $request)
+    {
+        $validator = \Validator::make($request->all(), [
+            'points' => 'required|numeric|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $pointsToRedeem = (float) $request->points;
+        $pointValue = 1; // 1 loyalty point = Rs. 1
+
+        return DB::transaction(function () use ($pointsToRedeem, $pointValue) {
+            // Lock the user row so concurrent redeem requests cannot credit twice.
+            $user = User::whereKey(auth('api')->id())->lockForUpdate()->first();
+
+            if (! $user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized user',
+                ], 401);
+            }
+
+            $availablePoints = (float) Wallet::where('user_id', $user->id)
+                ->selectRaw("COALESCE(SUM(CASE WHEN type = 'credit' THEN points WHEN type = 'debit' THEN -points ELSE 0 END), 0) as balance")
+                ->value('balance');
+
+            if ($pointsToRedeem > $availablePoints) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Insufficient loyalty points',
+                    'available_points' => $availablePoints,
+                ], 422);
+            }
+
+            $redeemedAmount = $pointsToRedeem * $pointValue;
+
+            Wallet::create([
+                'user_id' => $user->id,
+                'type' => 'debit',
+                'points' => $pointsToRedeem,
+                'description' => "Redeemed {$pointsToRedeem} loyalty points to wallet (Rs. {$redeemedAmount})",
+            ]);
+
+            $user->increment('wallet_points', $redeemedAmount);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Points added to wallet successfully',
+                'data' => [
+                    'redeemed_points' => $pointsToRedeem,
+                    'point_value' => $pointValue,
+                    'redeemed_amount' => $redeemedAmount,
+                    'remaining_loyalty_points' => $availablePoints - $pointsToRedeem,
+                    'wallet_balance' => (float) $user->fresh()->wallet_points,
+                ],
+            ], 200);
+        });
     }
 
     public function notifications()
@@ -110,9 +181,9 @@ class UserController extends Controller
             if ($point->type == 'credit') {
                 $availablePoints += $point->points;
             }
-            // elseif ($point->type == 'debit') {
-            //     $availablePoints -= $point->points;
-            // }
+            elseif ($point->type == 'debit') {
+                $availablePoints -= $point->points;
+            }
 
             $point->order_no = $point->order->order_no ?? null;
             unset($point->order);

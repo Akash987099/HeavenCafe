@@ -84,6 +84,7 @@ Route::middleware(['auth:api', \App\Http\Middleware\TrackApiUserActivity::class]
     Route::get('/table-no/{tableno}', [TableController::class, 'tableNo']);
 
     Route::get('/wallet', [UserController::class, 'walletPoints']);
+    Route::post('/wallet/redeem', [UserController::class, 'redeemWallet']);
     Route::get('/notifications', [UserController::class, 'notifications']);
     Route::get('/notification/{id}', [UserController::class, 'notificationDetails']);
     Route::get('/loyalty/points', [UserController::class, 'loyaltyPoints']);
