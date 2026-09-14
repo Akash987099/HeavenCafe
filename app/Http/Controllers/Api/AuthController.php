@@ -77,7 +77,7 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'type' => 'credit',
             'points' => 50,
-            'is_processed' => 1,
+            'is_processed' => 0,
             'description' => 'Welcome bonus for new registration',
             'expiry_date' => Carbon::now()->addDays(28),
         ]);
