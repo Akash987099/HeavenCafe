@@ -47,7 +47,9 @@
                                         </td>
 
                                         <td>
-                                            <p class="text-xs font-weight-bold mb-0">{{ $item->staff_id }}</p>
+                                            <a href="{{ route('pos_user.view', $item->id) }}" class="text-xs font-weight-bold mb-0 text-primary">
+                                                {{ $item->staff_id }}
+                                            </a>
                                         </td>
 
                                         <td>

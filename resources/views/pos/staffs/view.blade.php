@@ -28,6 +28,10 @@
                 <i class="fas fa-arrow-left"></i>
                 Back
             </a>
+            <a href="{{ route('pos.staff.offer-letter', $staff->id) }}" target="_blank"
+               class="h-10 px-4 rounded-xl bg-[#128C7E] text-white text-sm font-semibold flex items-center gap-2">
+                <i class="fas fa-file-alt"></i> Offer Letter
+            </a>
 
         </div>
 

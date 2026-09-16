@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\File;
+use App\Models\Setting;
 
 class PosController extends Controller
 {
@@ -792,6 +794,19 @@ class PosController extends Controller
             'email'  => 'required|email|max:255|unique:pos,email',
             'password' => 'required|string|min:6|confirmed',
             'role' => ['required', 'integer', 'not_in:1', Rule::exists('roles', 'id')->where('status', 1)],
+            'date_of_joining' => 'nullable|date',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'designation' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
+            'address' => 'nullable|string|max:1000',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_mobile' => 'nullable|digits:10',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:100',
+            'bank_ifsc_code' => 'nullable|string|max:50',
+            'documents' => 'nullable|array|max:10',
+            'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
         $pos = $this->pos;
@@ -803,10 +818,33 @@ class PosController extends Controller
         $pos->role = $request->role;
         $pos->staff_id = generateStaffId();
         $pos->password = Hash::make($request->password);
+        $pos->date_of_joining = $request->date_of_joining;
+        $pos->date_of_birth = $request->date_of_birth;
+        $pos->gender = $request->gender;
+        $pos->designation = $request->designation;
+        $pos->salary = $request->salary;
+        $pos->address = $request->address;
+        $pos->emergency_contact_name = $request->emergency_contact_name;
+        $pos->emergency_contact_mobile = $request->emergency_contact_mobile;
+        $pos->bank_name = $request->bank_name;
+        $pos->bank_account_number = $request->bank_account_number;
+        $pos->bank_ifsc_code = $request->bank_ifsc_code;
 
         $save = $pos->save();
 
         if ($save) {
+            $employeeDirectory = public_path('employees/' . $pos->staff_id);
+            File::ensureDirectoryExists($employeeDirectory);
+            $documents = [];
+            foreach ($request->file('documents', []) as $document) {
+                $filename = uniqid('document_', true) . '.' . $document->extension();
+                $document->move($employeeDirectory, $filename);
+                $documents[] = 'employees/' . $pos->staff_id . '/' . $filename;
+            }
+            if ($documents) {
+                $pos->documents = $documents;
+                $pos->save();
+            }
             return redirect()->back()->with('success', 'Successfully!');
         }
         return redirect()->back()->with('error', 'Failed!');
@@ -847,12 +885,36 @@ class PosController extends Controller
             'email' => 'required|email|max:255|unique:pos,email,' . $staff->id,
             'role' => ['required', 'integer', 'not_in:1', Rule::exists('roles', 'id')->where('status', 1)],
             'password' => 'nullable|string|min:6|confirmed',
+            'date_of_joining' => 'nullable|date',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'designation' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
+            'address' => 'nullable|string|max:1000',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_mobile' => 'nullable|digits:10',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:100',
+            'bank_ifsc_code' => 'nullable|string|max:50',
+            'documents' => 'nullable|array|max:10',
+            'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
         $staff->name = $request->name;
         $staff->mobile = $request->mobile;
         $staff->email = $request->email;
         $staff->role = $request->role;
+        $staff->date_of_joining = $request->date_of_joining;
+        $staff->date_of_birth = $request->date_of_birth;
+        $staff->gender = $request->gender;
+        $staff->designation = $request->designation;
+        $staff->salary = $request->salary;
+        $staff->address = $request->address;
+        $staff->emergency_contact_name = $request->emergency_contact_name;
+        $staff->emergency_contact_mobile = $request->emergency_contact_mobile;
+        $staff->bank_name = $request->bank_name;
+        $staff->bank_account_number = $request->bank_account_number;
+        $staff->bank_ifsc_code = $request->bank_ifsc_code;
 
         if ($request->filled('password')) {
             $staff->password = Hash::make($request->password);
@@ -860,7 +922,30 @@ class PosController extends Controller
 
         $staff->save();
 
+        if ($request->hasFile('documents')) {
+            $employeeDirectory = public_path('employees/' . $staff->staff_id);
+            File::ensureDirectoryExists($employeeDirectory);
+            $documents = $staff->documents ?? [];
+            foreach ($request->file('documents', []) as $document) {
+                $filename = uniqid('document_', true) . '.' . $document->extension();
+                $document->move($employeeDirectory, $filename);
+                $documents[] = 'employees/' . $staff->staff_id . '/' . $filename;
+            }
+            $staff->documents = $documents;
+            $staff->save();
+        }
+
         return redirect()->route('pos.staff')->with('success', 'Staff updated successfully.');
+    }
+
+    public function staffOfferLetter($id)
+    {
+        $pos = Pos::with('store')
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+        $company = Setting::where('slug', 'web_name')->first();
+
+        return view('posuser.offer-letter-print', compact('pos', 'company'));
     }
 
     public function kitchenOrders()

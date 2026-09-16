@@ -184,6 +184,11 @@
                                             title="Edit Staff">
                                             <i class="fas fa-pen"></i>
                                         </a>
+                                        <a href="{{ route('pos.staff.offer-letter', $pos->id) }}" target="_blank"
+                                            class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-[#128C7E] hover:text-white transition"
+                                            title="Offer Letter">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
 
                                     </td>
 

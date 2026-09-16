@@ -79,7 +79,7 @@
 
 
             {{-- Form --}}
-            <form action="{{ route('pos.staff.save') }}" method="POST">
+            <form action="{{ route('pos.staff.save') }}" method="POST" enctype="multipart/form-data">
 
                 @csrf
 
@@ -275,6 +275,8 @@
                         </div>
 
                     </div>
+
+                    @include('pos.staffs.profile-fields')
 
 
                     {{-- Staff ID Information --}}

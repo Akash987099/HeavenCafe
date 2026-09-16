@@ -33,6 +33,7 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::post('/staff/save', 'staffSave')->name('staff.save');
         Route::get('/staff/{id}/edit', 'staffEdit')->name('staff.edit');
         Route::post('/staff/{id}/update', 'staffUpdate')->name('staff.update');
+        Route::get('/staff/{id}/offer-letter', 'staffOfferLetter')->name('staff.offer-letter');
         Route::get('/staff/{id}', 'staffView')->name('staff.view');
 
         // Poliy

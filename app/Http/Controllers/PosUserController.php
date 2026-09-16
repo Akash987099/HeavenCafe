@@ -129,6 +129,18 @@ class PosUserController extends Controller
         return view('posuser.edit', compact('pos', 'store'));
     }
 
+    public function view($id)
+    {
+        $pos = $this->pos->where('role', 1)->findOrFail($id);
+        $staffs = $this->pos
+            ->with('roleMaster')
+            ->where('user_id', $pos->id)
+            ->orderByDesc('id')
+            ->paginate(config('constants.pagination_limit'));
+
+        return view('posuser.staff-list', compact('pos', 'staffs'));
+    }
+
     public function update(Request $request)
     {
         $request->validate([
@@ -175,7 +187,7 @@ class PosUserController extends Controller
         $pos->mobile = $request->mobile;
         $pos->email = $request->email;
         $pos->store_id = $request->store;
-        $pos->role = 1;
+        // Keep the existing role when an administrator updates a staff member.
         $pos->date_of_joining = $request->date_of_joining;
         $pos->date_of_birth = $request->date_of_birth;
         $pos->gender = $request->gender;
@@ -213,7 +225,7 @@ class PosUserController extends Controller
 
     public function offerLetter($id)
     {
-        $pos = $this->pos->with('store')->where('role', 1)->findOrFail($id);
+        $pos = $this->pos->with('store')->findOrFail($id);
         $company = Setting::where('slug', 'web_name')->first();
 
         return view('posuser.offer-letter-print', compact('pos', 'company'));
