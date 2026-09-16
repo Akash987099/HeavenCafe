@@ -14,6 +14,7 @@ use App\Models\StoreOrder;
 use App\Models\StoreOrderItem;
 use App\Models\StoreProduct;
 use App\Models\Setting;
+use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -44,7 +45,8 @@ class PosUserController extends Controller
 
     public function add(){
         $store = $this->store->all();
-        return view('posuser.add', compact('store'));
+        $roles = Role::where('status', 1)->orderBy('role_name')->get();
+        return view('posuser.add', compact('store', 'roles'));
     }
 
     public function save(Request $request){
@@ -125,8 +127,9 @@ class PosUserController extends Controller
         }
 
         $store = $this->store->all();
+        $roles = Role::where('status', 1)->orderBy('role_name')->get();
 
-        return view('posuser.edit', compact('pos', 'store'));
+        return view('posuser.edit', compact('pos', 'store', 'roles'));
     }
 
     public function view($id)

@@ -36,7 +36,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="designation" class="form-label">Designation</label>
-                                    <input type="text" class="form-control" id="designation" name="designation" value="{{ old('designation') }}" placeholder="e.g. Cashier">
+                                    <select class="form-control" id="designation" name="designation">
+                                        <option value="">---- Select Designation -----</option>
+                                        @foreach ($roles as $role)
+                                            <option value="{{ $role->role_name }}" {{ old('designation') === $role->role_name ? 'selected' : '' }}>{{ $role->role_name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
 
