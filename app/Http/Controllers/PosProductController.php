@@ -109,7 +109,7 @@ class PosProductController extends Controller
                 $order = StoreOrder::create([
                     'pos_user_id' => Auth::guard('pos')->id(),
                     'store_id' => $posUser->store_id,
-                    'order_number' => 'STORE-' . now()->format('YmdHis') . '-' . random_int(100, 999),
+                    'order_number' => now()->format('Hi') . '-' . random_int(100, 999),
                     'status' => 1,
                     'subtotal' => $subtotal,
                     'grand_total' => $subtotal,
