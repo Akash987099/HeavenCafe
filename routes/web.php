@@ -99,6 +99,7 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('save', 'save')->name('save');
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
+        Route::get('offer-letter/{id}', 'offerLetter')->name('offer-letter');
         Route::get('orders', 'orders')->name('orders');
         Route::get('order/{id}', 'orderView')->name('order_view');
 

@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\StoreOrder;
 use App\Models\StoreOrderItem;
 use App\Models\StoreProduct;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class PosUserController extends Controller
 {
@@ -52,6 +54,20 @@ class PosUserController extends Controller
             'email'  => 'required|email|max:255|unique:pos,email',
             'store'  => 'required',
             'password' => 'required|string|min:6',
+            // All employee-profile fields below are intentionally optional.
+            'date_of_joining' => 'nullable|date',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'designation' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
+            'address' => 'nullable|string|max:1000',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_mobile' => 'nullable|digits:10',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:100',
+            'bank_ifsc_code' => 'nullable|string|max:50',
+            'documents' => 'nullable|array|max:10',
+            'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
         $pos = $this->pos;
@@ -62,10 +78,36 @@ class PosUserController extends Controller
         $pos->role = 1;
         $pos->staff_id = generateStaffId();
         $pos->password = Hash::make($request->password);
+        $pos->date_of_joining = $request->date_of_joining;
+        $pos->date_of_birth = $request->date_of_birth;
+        $pos->gender = $request->gender;
+        $pos->designation = $request->designation;
+        $pos->salary = $request->salary;
+        $pos->address = $request->address;
+        $pos->emergency_contact_name = $request->emergency_contact_name;
+        $pos->emergency_contact_mobile = $request->emergency_contact_mobile;
+        $pos->bank_name = $request->bank_name;
+        $pos->bank_account_number = $request->bank_account_number;
+        $pos->bank_ifsc_code = $request->bank_ifsc_code;
 
         $save = $pos->save();
 
         if ($save) {
+            $employeeDirectory = public_path('employees/' . $pos->staff_id);
+            File::ensureDirectoryExists($employeeDirectory);
+
+            $documents = [];
+            foreach ($request->file('documents', []) as $document) {
+                $filename = uniqid('document_', true) . '.' . $document->extension();
+                $document->move($employeeDirectory, $filename);
+                $documents[] = 'employees/' . $pos->staff_id . '/' . $filename;
+            }
+
+            if ($documents) {
+                $pos->documents = $documents;
+                $pos->save();
+            }
+
             return redirect()->back()->with('success', 'Successfully!');
         }
         return redirect()->back()->with('error', 'Failed!');
@@ -107,6 +149,20 @@ class PosUserController extends Controller
             ],
 
             'store'  => 'required|exists:store,id',
+            // Optional employee-profile fields.
+            'date_of_joining' => 'nullable|date',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'designation' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
+            'address' => 'nullable|string|max:1000',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_mobile' => 'nullable|digits:10',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:100',
+            'bank_ifsc_code' => 'nullable|string|max:50',
+            'documents' => 'nullable|array|max:10',
+            'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
         $pos = $this->pos->find($request->id);
@@ -120,13 +176,47 @@ class PosUserController extends Controller
         $pos->email = $request->email;
         $pos->store_id = $request->store;
         $pos->role = 1;
+        $pos->date_of_joining = $request->date_of_joining;
+        $pos->date_of_birth = $request->date_of_birth;
+        $pos->gender = $request->gender;
+        $pos->designation = $request->designation;
+        $pos->salary = $request->salary;
+        $pos->address = $request->address;
+        $pos->emergency_contact_name = $request->emergency_contact_name;
+        $pos->emergency_contact_mobile = $request->emergency_contact_mobile;
+        $pos->bank_name = $request->bank_name;
+        $pos->bank_account_number = $request->bank_account_number;
+        $pos->bank_ifsc_code = $request->bank_ifsc_code;
 
 
         if ($pos->save()) {
-            return redirect()->back()->with('success', 'Category updated successfully!');
+            $employeeDirectory = public_path('employees/' . $pos->staff_id);
+            File::ensureDirectoryExists($employeeDirectory);
+
+            $documents = $pos->documents ?? [];
+            foreach ($request->file('documents', []) as $document) {
+                $filename = uniqid('document_', true) . '.' . $document->extension();
+                $document->move($employeeDirectory, $filename);
+                $documents[] = 'employees/' . $pos->staff_id . '/' . $filename;
+            }
+
+            if ($request->hasFile('documents')) {
+                $pos->documents = $documents;
+                $pos->save();
+            }
+
+            return redirect()->back()->with('success', 'Employee updated successfully!');
         }
 
         return redirect()->back()->with('error', 'Update failed!');
+    }
+
+    public function offerLetter($id)
+    {
+        $pos = $this->pos->with('store')->where('role', 1)->findOrFail($id);
+        $company = Setting::where('slug', 'web_name')->first();
+
+        return view('posuser.offer-letter-print', compact('pos', 'company'));
     }
 
     public function orders(){
