@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\Brand;
 use App\Models\Product;
+use App\Models\PosOrder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
@@ -34,6 +35,32 @@ class AdminController extends Controller
         $totalOrders = $this->order->count();
         $todaySales = (float) $this->order->whereDate('created_at', now()->toDateString())->sum('final_amount');
         $totalSales = (float) $this->order->sum('final_amount');
+
+        $posOrders = PosOrder::query();
+        $todayPosOrders = (clone $posOrders)->whereDate('created_at', now()->toDateString())->count();
+        $totalPosOrders = (clone $posOrders)->count();
+        $pendingPosOrders = (clone $posOrders)->where('status', 'pending')->count();
+        $todayPosSales = (float) (clone $posOrders)
+            ->whereDate('created_at', now()->toDateString())
+            ->where('status', 'completed')
+            ->sum('grand_total');
+        $totalPosSales = (float) (clone $posOrders)
+            ->where('status', 'completed')
+            ->sum('grand_total');
+        $recentPosOrders = (clone $posOrders)
+            ->latest('id')
+            ->take(8)
+            ->get([
+                'id',
+                'order_number',
+                'customer_name',
+                'customer_phone',
+                'grand_total',
+                'payment_method',
+                'payment_status',
+                'status',
+                'created_at',
+            ]);
 
         $totalProducts = Product::count();
         $totalCategories = Category::count();
@@ -223,6 +250,12 @@ class AdminController extends Controller
             'totalOrders',
             'todaySales',
             'totalSales',
+            'todayPosOrders',
+            'totalPosOrders',
+            'pendingPosOrders',
+            'todayPosSales',
+            'totalPosSales',
+            'recentPosOrders',
             'totalProducts',
             'totalCategories',
             'totalSubCategories',

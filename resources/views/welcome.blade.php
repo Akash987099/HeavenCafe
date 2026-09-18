@@ -274,6 +274,40 @@
         </div>
     </div>
 
+    <div class="card dashboard-card mb-4">
+        <div class="card-header bg-white border-0 p-4 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h5 class="mb-1">POS Orders</h5>
+                <p class="text-sm text-secondary mb-0">Billing performance across all POS counters</p>
+            </div>
+            <a href="{{ route('pos_user.orders') }}" class="btn btn-outline-info btn-sm mb-0">View All POS Orders</a>
+        </div>
+        <div class="card-body p-4">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="label">Total POS Orders</div>
+                    <div class="value">{{ $totalPosOrders ?? 0 }}</div>
+                    <p class="meta">Today: {{ $todayPosOrders ?? 0 }}</p>
+                </div>
+                <div class="summary-item">
+                    <div class="label">POS Revenue</div>
+                    <div class="value">{{ $formatInr($totalPosSales ?? 0) }}</div>
+                    <p class="meta">Completed payments only</p>
+                </div>
+                <div class="summary-item">
+                    <div class="label">Today's POS Revenue</div>
+                    <div class="value">{{ $formatInr($todayPosSales ?? 0) }}</div>
+                    <p class="meta">Completed today</p>
+                </div>
+                <div class="summary-item">
+                    <div class="label">Pending POS Orders</div>
+                    <div class="value">{{ $pendingPosOrders ?? 0 }}</div>
+                    <p class="meta">Awaiting payment or completion</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-xl-8 mb-4">
             <div class="card dashboard-card h-100">
@@ -404,6 +438,62 @@
     </div>
 
     <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Recent POS Orders</h5>
+                        <p class="text-sm text-secondary mb-0">Latest bills generated at POS counters</p>
+                    </div>
+                    <a href="{{ route('pos_user.orders') }}" class="btn btn-outline-info btn-sm mb-0">View All</a>
+                </div>
+                <div class="card-body p-0 pt-3">
+                    <div class="table-responsive">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Bill No.</th>
+                                    <th>Customer</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end pe-4">Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentPosOrders ?? [] as $posOrder)
+                                    <tr>
+                                        <td class="ps-4">
+                                            <a href="{{ route('pos_user.order_view', $posOrder->id) }}" class="fw-bold text-dark">
+                                                {{ $posOrder->order_number }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark text-sm">{{ $posOrder->customer_name ?: 'Walk-in customer' }}</div>
+                                            <div class="text-xs text-secondary">{{ $posOrder->customer_phone ?: 'No phone number' }}</div>
+                                        </td>
+                                        <td>{{ ucfirst($posOrder->payment_method ?: 'N/A') }}</td>
+                                        <td>
+                                            @if(strtolower($posOrder->status) === 'completed')
+                                                <span class="badge badge-soft-success">Completed</span>
+                                            @else
+                                                <span class="badge badge-soft-warning">{{ ucfirst($posOrder->status ?: 'Pending') }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-end">{{ $formatInr($posOrder->grand_total) }}</td>
+                                        <td class="text-end pe-4">{{ $posOrder->created_at?->format('d M Y, h:i A') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-secondary">No POS orders found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="col-xl-6 mb-4">
             <div class="card dashboard-card h-100">
                 <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
