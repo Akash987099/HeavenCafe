@@ -4,7 +4,7 @@
 
 <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6">
 
-    <div class="max-w-7xl mx-auto">
+    <div class="mx-auto">
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
@@ -18,7 +18,7 @@
                     {{-- Search --}}
                     <div class="p-4 border-b border-slate-200">
 
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
 
                             <div class="relative flex-1">
 
@@ -30,7 +30,7 @@
                                     type="text"
                                     id="productSearch"
                                     autocomplete="off"
-                                    placeholder="Search by SKU Product ID..."
+                                    placeholder="Search by product name, SKU or barcode..."
                                     class="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200
                                            bg-slate-50 text-sm text-slate-700
                                            focus:outline-none focus:ring-2 focus:ring-[#128C7E]/20
@@ -38,6 +38,16 @@
                                 >
 
                             </div>
+
+                            <select
+                                id="categoryFilter"
+                                class="h-12 min-w-44 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#128C7E]/20 focus:border-[#128C7E]"
+                            >
+                                <option value="">All categories</option>
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
+                            </select>
 
                             {{-- Camera --}}
                             <button
@@ -68,7 +78,7 @@
                                 </h2>
 
                                 <p class="text-xs text-slate-400 mt-1">
-                                    Search by SKU Product ID
+                                    Search by product name, SKU or barcode
                                 </p>
 
                             </div>
@@ -119,7 +129,7 @@
                             </h3>
 
                             <p class="text-xs text-slate-400 mt-1">
-                                Enter SKU Product ID to view products
+                                Enter a product name, SKU or barcode to view products
                             </p>
 
                         </div>
@@ -143,7 +153,7 @@
                             </h3>
 
                             <p class="text-xs text-slate-400 mt-1">
-                                No product found with this SKU Product ID
+                                No product found with this product name, SKU or barcode
                             </p>
 
                         </div>
@@ -469,6 +479,7 @@ document.addEventListener('DOMContentLoaded', function () {
     */
 
     const searchInput = document.getElementById('productSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
 
     const productLoader = document.getElementById('productLoader');
     const productEmpty = document.getElementById('productEmpty');
@@ -496,6 +507,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let cart = {};
 
     let searchTimer = null;
+    let searchRequestId = 0;
 
 
     /*
@@ -517,7 +529,9 @@ document.addEventListener('DOMContentLoaded', function () {
         |--------------------------------------------------------------------------
         */
 
-        if (skuProductId.length === 0) {
+        if (skuProductId.length === 0 && categoryFilter.value.length === 0) {
+
+            searchRequestId++;
 
             productList.innerHTML = '';
 
@@ -549,6 +563,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
+    categoryFilter.addEventListener('change', function () {
+
+        clearTimeout(searchTimer);
+
+        searchProduct(searchInput.value.trim());
+
+    });
+
 
     /*
     |--------------------------------------------------------------------------
@@ -557,6 +579,20 @@ document.addEventListener('DOMContentLoaded', function () {
     */
 
     function searchProduct(skuProductId, autoAdd = false) {
+
+        const categoryId = categoryFilter.value;
+        const requestId = ++searchRequestId;
+
+        if (skuProductId.length === 0 && categoryId.length === 0) {
+            productList.innerHTML = '';
+            productTable.classList.add('hidden');
+            productLoader.classList.add('hidden');
+            noResult.classList.add('hidden');
+            resultCount.classList.add('hidden');
+            productEmpty.classList.remove('hidden');
+
+            return;
+        }
 
         productLoader.classList.remove('hidden');
 
@@ -574,7 +610,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const url =
             "{{ route('pos.search') }}" +
             "?sku_product_id=" +
-            encodeURIComponent(skuProductId);
+            encodeURIComponent(skuProductId) +
+            "&category_id=" +
+            encodeURIComponent(categoryId);
 
 
         fetch(url, {
@@ -601,6 +639,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         })
         .then(function (data) {
+
+            if (requestId !== searchRequestId) {
+                return;
+            }
 
             productLoader.classList.add('hidden');
 
@@ -710,6 +752,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         })
         .catch(function (error) {
+
+            if (requestId !== searchRequestId) {
+                return;
+            }
 
             console.error('Product Search Error:', error);
 

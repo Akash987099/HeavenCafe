@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\File;
 use App\Models\Setting;
+use App\Models\Category;
 
 class PosController extends Controller
 {
@@ -121,26 +122,35 @@ class PosController extends Controller
     }
 
     public function order(){
-        return view('pos/order');
+        $categories = Category::query()
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('pos/order', compact('categories'));
     }
 
     public function search(Request $request)
     {
         $search = trim($request->sku_product_id ?? '');
+        $categoryId = $request->integer('category_id');
 
-        if ($search === '') {
+        if ($search === '' && !$categoryId) {
 
             return response()->json([
                 'success' => false,
                 'products' => [],
-                'message' => 'Search value is required.',
+                'message' => 'Search value or category is required.',
             ]);
         }
 
 
         $products = $this->product
             ->where('status', 'active')
-            ->where(function ($query) use ($search) {
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('category', $categoryId);
+            })
+            ->when($search !== '', function ($query) use ($search) {
 
                 $query->where(
                     'sku_product_id',
@@ -150,6 +160,12 @@ class PosController extends Controller
 
                 ->orWhere(
                     'barcode_base',
+                    'LIKE',
+                    '%' . $search . '%'
+                )
+
+                ->orWhere(
+                    'name',
                     'LIKE',
                     '%' . $search . '%'
                 );
