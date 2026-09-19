@@ -194,7 +194,7 @@
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <div class="stat-label">Combined Revenue</div>
+                            <div class="stat-label">Total Revenue</div>
                             <div class="stat-value">{{ $formatInr($totalCombinedSales ?? 0) }}</div>
                             <p class="stat-meta">Website + completed POS payments</p>
                         </div>
@@ -202,7 +202,7 @@
                             <i class="ni ni-chart-bar-32"></i>
                         </span>
                     </div>
-                    <p class="text-sm text-secondary mb-0">Selected range: {{ $periodLabel ?? '' }}</p>
+                    <p class="text-sm text-secondary mb-0">Today: {{ $formatInr($todayCombinedSales ?? 0) }}</p>
                 </div>
             </div>
         </div>
@@ -219,7 +219,7 @@
                             <i class="ni ni-cart"></i>
                         </span>
                     </div>
-                    <p class="text-sm text-secondary mb-0">Selected range: {{ $periodLabel ?? '' }}</p>
+                    <p class="text-sm text-secondary mb-0">Today: {{ $todayCombinedOrders ?? 0 }} | Avg/day: {{ $averageDailyOrders ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -230,13 +230,13 @@
                         <div>
                             <div class="stat-label">Customers</div>
                             <div class="stat-value">{{ $totalUsers ?? 0 }}</div>
-                            <p class="stat-meta">{{ $weeklyUsers ?? 0 }} new users in the selected range</p>
+                            <p class="stat-meta">{{ $todayUsers ?? 0 }} new users today</p>
                         </div>
                         <span class="dashboard-kpi-icon bg-gradient-primary">
                             <i class="ni ni-single-02"></i>
                         </span>
                     </div>
-                    <p class="text-sm text-secondary mb-0">Selected range: {{ $periodLabel ?? '' }}</p>
+                    <p class="text-sm text-secondary mb-0">Today: {{ $todayUsers ?? 0 }} new registrations</p>
                 </div>
             </div>
         </div>
