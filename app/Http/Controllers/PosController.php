@@ -212,6 +212,7 @@ class PosController extends Controller
                 'revenueChange',
                 'dailySales',
                 'dailyChartPoints',
+                'chartMax',
                 'paymentBreakdown',
                 'paymentGradient',
                 'selectedFrom',

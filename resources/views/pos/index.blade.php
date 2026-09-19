@@ -240,6 +240,29 @@
                 if (salesMetrics && orderSummary) {
                     salesMetrics.insertAdjacentElement('afterend', orderSummary);
                 }
+
+                const revenueChart = document.querySelector('svg[aria-label="Date-wise revenue line chart"]');
+                const chartMaximum = @json($chartMax);
+
+                if (revenueChart) {
+                    [
+                        { value: chartMaximum, y: 43 },
+                        { value: chartMaximum / 2, y: 128 },
+                        { value: 0, y: 213 }
+                    ].forEach(function (tick) {
+                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        label.setAttribute('x', '30');
+                        label.setAttribute('y', String(tick.y));
+                        label.setAttribute('text-anchor', 'end');
+                        label.setAttribute('fill', '#64748b');
+                        label.setAttribute('font-size', '10');
+                        label.textContent = '₹' + Number(tick.value).toLocaleString('en-IN', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                        revenueChart.appendChild(label);
+                    });
+                }
             });
         </script>
 
