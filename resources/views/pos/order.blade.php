@@ -186,11 +186,11 @@
             {{-- =========================================================
                 RIGHT SIDE : BILL
             ========================================================== --}}
-            <div class="lg:col-span-4">
+            <div class="lg:col-span-4 lg:sticky lg:top-5 lg:self-start lg:h-[calc(100vh-3rem)] lg:max-h-[720px]">
 
                 <div
                     class="bg-white rounded-2xl border border-slate-200 shadow-sm
-                           flex flex-col h-full lg:min-h-[600px]"
+                           flex flex-col h-full"
                 >
 
                     {{-- Bill Header --}}

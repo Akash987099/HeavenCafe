@@ -34,7 +34,7 @@
             <div id="scrollTarget" class="h-1"></div>
         </section>
 
-        <aside class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:min-h-[620px]">
+        <aside class="lg:col-span-4 lg:sticky lg:top-5 lg:self-start lg:h-[calc(100vh-3rem)] lg:max-h-[720px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col">
             <div class="p-5 border-b border-slate-200"><h2 class="text-xl font-bold text-slate-800">Current Order</h2><p class="text-xs text-slate-400 mt-1">Store product price: ₹0.00</p></div>
             <div id="cartItems" class="flex-1 p-4 space-y-3 overflow-y-auto"><div id="emptyCart" class="min-h-[260px] flex flex-col items-center justify-center text-center text-slate-400"><i class="fas fa-shopping-cart text-3xl mb-3"></i><p class="text-sm">No products added yet</p></div></div>
             <div class="p-5 border-t border-slate-200"><div class="flex justify-between text-sm"><span class="text-slate-500">Total</span><span class="font-bold text-[#128C7E]">₹0.00</span></div><form id="orderForm" method="POST" action="{{ route('pos_product.order') }}">@csrf<div id="cartInputs"></div><button class="w-full h-12 mt-5 rounded-xl bg-[#128C7E] text-white font-semibold hover:bg-[#0f766e] transition"><i class="fas fa-receipt mr-2"></i>Create Order</button></form></div>
