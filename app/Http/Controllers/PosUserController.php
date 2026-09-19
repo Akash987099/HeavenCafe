@@ -290,14 +290,6 @@ class PosUserController extends Controller
                 }
 
                 foreach ($order->items as $item) {
-                    $product = Product::query()
-                        ->lockForUpdate()
-                        ->findOrFail($item->product_id);
-
-                    if ((int) $product->store_qty < $item->quantity) {
-                        throw new \RuntimeException($product->name . ' has insufficient company stock for delivery.');
-                    }
-
                     $storeProduct = StoreProduct::query()
                         ->where('store_id', $order->store_id)
                         ->where('product_id', $item->product_id)
@@ -314,7 +306,6 @@ class PosUserController extends Controller
                         ]);
                     }
 
-                    $product->decrement('store_qty', $item->quantity);
                 }
 
                 $order->update(['status' => $validated['status']]);
@@ -360,12 +351,6 @@ class PosUserController extends Controller
                     }
 
                     foreach ($order->items as $item) {
-                        $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
-
-                        if ((int) $product->store_qty < $item->quantity) {
-                            throw new \RuntimeException($product->name . ' has insufficient company stock for delivery.');
-                        }
-
                         $storeProduct = StoreProduct::query()
                             ->where('store_id', $order->store_id)
                             ->where('product_id', $item->product_id)
@@ -382,7 +367,6 @@ class PosUserController extends Controller
                             ]);
                         }
 
-                        $product->decrement('store_qty', $item->quantity);
                     }
 
                     $order->update(['status' => 2]);

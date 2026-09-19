@@ -34,6 +34,7 @@ class PosProductController extends Controller
         $products = Product::query()
             ->where('is_store', 1)
             ->where('status', 'active')
+            ->where('store_qty', '>', 0)
             ->when($validated['category'] ?? null, function ($query, $category) {
                 $query->where('category', $category);
             })
@@ -126,6 +127,10 @@ class PosProductController extends Controller
                         'price' => $product->price,
                         'total' => (float) $product->price * $item['qty'],
                     ]);
+
+                    // Reserve company/store quantity immediately. This prevents the
+                    // same units from being ordered again while this order is pending.
+                    $product->decrement('store_qty', $item['qty']);
 
                 }
 
