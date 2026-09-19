@@ -166,6 +166,14 @@ class AdminController extends Controller
             ->orderBy('date', 'ASC')
             ->get();
 
+        $posOrdersData = (clone $posOrders)->select(
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(*) as count')
+        )
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
         $usersData = $this->user->select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
@@ -189,6 +197,7 @@ class AdminController extends Controller
         $salesMap = $salesData->keyBy('date');
         $posSalesMap = $posSalesData->keyBy('date');
         $ordersMap = $ordersData->keyBy('date');
+        $posOrdersMap = $posOrdersData->keyBy('date');
         $usersMap = $usersData->keyBy('date');
         $orderUsersMap = $orderUsersData->keyBy('date');
 
@@ -198,6 +207,8 @@ class AdminController extends Controller
         $posSalesValues = [];
         $ordersLabels = [];
         $ordersValues = [];
+        $websiteOrdersValues = [];
+        $posOrdersValues = [];
         $salesDetails = [];
 
         foreach ($dateRange as $date) {
@@ -206,7 +217,9 @@ class AdminController extends Controller
             $websiteSalesValue = (float) optional($salesMap->get($dateKey))->total;
             $posSalesValue = (float) optional($posSalesMap->get($dateKey))->total;
             $salesValue = $websiteSalesValue + $posSalesValue;
-            $ordersValue = (int) optional($ordersMap->get($dateKey))->count;
+            $websiteOrdersValue = (int) optional($ordersMap->get($dateKey))->count;
+            $posOrdersValue = (int) optional($posOrdersMap->get($dateKey))->count;
+            $ordersValue = $websiteOrdersValue + $posOrdersValue;
             $usersValue = (int) optional($usersMap->get($dateKey))->count;
             $customerList = collect(explode('##', (string) optional($orderUsersMap->get($dateKey))->customer_list))
                 ->filter()
@@ -227,6 +240,8 @@ class AdminController extends Controller
             $posSalesValues[] = round($posSalesValue, 2);
             $ordersLabels[] = $label;
             $ordersValues[] = $ordersValue;
+            $websiteOrdersValues[] = $websiteOrdersValue;
+            $posOrdersValues[] = $posOrdersValue;
             $salesDetails[] = [
                 'date' => $label,
                 'full_date' => $date->format('d M Y'),
@@ -349,6 +364,8 @@ class AdminController extends Controller
             'posSalesValues',
             'ordersLabels',
             'ordersValues',
+            'websiteOrdersValues',
+            'posOrdersValues',
             'wallets',
             'salesDetails',
             'salesTableDetails',

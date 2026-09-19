@@ -194,15 +194,15 @@
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <div class="stat-label">Total Revenue</div>
-                            <div class="stat-value">{{ $formatInr($totalSales ?? 0) }}</div>
-                            <p class="stat-meta">Weekly revenue: {{ $formatInr($weeklySales ?? 0) }}</p>
+                            <div class="stat-label">Combined Revenue</div>
+                            <div class="stat-value">{{ $formatInr($totalCombinedSales ?? 0) }}</div>
+                            <p class="stat-meta">Website + completed POS payments</p>
                         </div>
                         <span class="dashboard-kpi-icon bg-gradient-success">
                             <i class="ni ni-chart-bar-32"></i>
                         </span>
                     </div>
-                    <p class="text-sm text-secondary mb-0">Today: {{ $formatInr($todaySales ?? 0) }}</p>
+                    <p class="text-sm text-secondary mb-0">Selected range: {{ $periodLabel ?? '' }}</p>
                 </div>
             </div>
         </div>
@@ -212,14 +212,14 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <div class="stat-label">Orders</div>
-                            <div class="stat-value">{{ $totalOrders ?? 0 }}</div>
-                            <p class="stat-meta">{{ $weeklyOrders ?? 0 }} orders in the last 7 days</p>
+                            <div class="stat-value">{{ $totalCombinedOrders ?? 0 }}</div>
+                            <p class="stat-meta">Website + POS orders</p>
                         </div>
                         <span class="dashboard-kpi-icon bg-gradient-info">
                             <i class="ni ni-cart"></i>
                         </span>
                     </div>
-                    <p class="text-sm text-secondary mb-0">Today: {{ $todayOrders ?? 0 }} | Avg/day: {{ $averageDailyOrders ?? 0 }}</p>
+                    <p class="text-sm text-secondary mb-0">Selected range: {{ $periodLabel ?? '' }}</p>
                 </div>
             </div>
         </div>
@@ -230,13 +230,13 @@
                         <div>
                             <div class="stat-label">Customers</div>
                             <div class="stat-value">{{ $totalUsers ?? 0 }}</div>
-                            <p class="stat-meta">{{ $weeklyUsers ?? 0 }} new users in the last 7 days</p>
+                            <p class="stat-meta">{{ $weeklyUsers ?? 0 }} new users in the selected range</p>
                         </div>
                         <span class="dashboard-kpi-icon bg-gradient-primary">
                             <i class="ni ni-single-02"></i>
                         </span>
                     </div>
-                    <p class="text-sm text-secondary mb-0">Today: {{ $todayUsers ?? 0 }} new registrations</p>
+                    <p class="text-sm text-secondary mb-0">Selected range: {{ $periodLabel ?? '' }}</p>
                 </div>
             </div>
         </div>
@@ -429,8 +429,8 @@
                 <div class="card-header bg-white border-0 p-4 pb-0">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
-                            <h5 class="mb-1">Orders Trend</h5>
-                            <p class="text-sm text-secondary mb-0">Daily order count for the last 7 days</p>
+                            <h5 class="mb-1">Combined Orders Trend</h5>
+                            <p class="text-sm text-secondary mb-0">Website and POS order count for the selected period</p>
                         </div>
                         <div class="text-sm text-secondary">Range: {{ $periodLabel ?? '' }}</div>
                     </div>
@@ -832,9 +832,16 @@
           data: {
               labels: {!! json_encode($ordersLabels ?? []) !!},
               datasets: [{
-                  label: 'Orders',
-                  data: {!! json_encode($ordersValues ?? []) !!},
-                  backgroundColor: '#0ea5e9',
+                  label: 'Website Orders',
+                  data: {!! json_encode($websiteOrdersValues ?? []) !!},
+                  backgroundColor: '#10b981',
+                  borderRadius: 8,
+                  borderSkipped: false,
+                  maxBarThickness: 30
+              }, {
+                  label: 'POS Orders',
+                  data: {!! json_encode($posOrdersValues ?? []) !!},
+                  backgroundColor: '#f97316',
                   borderRadius: 8,
                   borderSkipped: false,
                   maxBarThickness: 30
@@ -844,15 +851,16 @@
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
-                  legend: { display: false },
+                  legend: { display: true, position: 'bottom' },
                   tooltip: {
                       callbacks: {
                           label: function(context) {
-                              return 'Orders: ' + context.raw;
+                              return context.dataset.label + ': ' + context.raw;
                           },
                           afterLabel: function(context) {
+                              if (context.datasetIndex !== 0) return '';
                               const detail = salesDetails[context.dataIndex] || {};
-                              return 'Revenue: ' + inrFormatter.format(detail.sales || 0);
+                              return 'Combined revenue: ' + inrFormatter.format(detail.sales || 0);
                           }
                       }
                   }
@@ -860,6 +868,7 @@
               scales: {
                   y: {
                       beginAtZero: true,
+                      stacked: true,
                       ticks: { color: '#64748b', precision: 0 },
                       grid: {
                           color: 'rgba(148, 163, 184, 0.15)',
@@ -867,6 +876,7 @@
                       }
                   },
                   x: {
+                      stacked: true,
                       ticks: { color: '#64748b' },
                       grid: { display: false }
                   }
