@@ -190,6 +190,12 @@
                             {{-- Dynamic Products --}}
                             <div id="productList"></div>
 
+                            <div id="productLoadMore" class="hidden px-3 py-4 text-center text-xs text-slate-400">
+                                <i class="fas fa-spinner fa-spin mr-1"></i> Loading more products...
+                            </div>
+
+                            <div id="productScrollSentinel" class="h-px"></div>
+
                         </div>
 
                     </div>
@@ -487,6 +493,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const productTable = document.getElementById('productTable');
     const productList = document.getElementById('productList');
+    const productLoadMore = document.getElementById('productLoadMore');
+    const productScrollSentinel = document.getElementById('productScrollSentinel');
 
     const resultCount = document.getElementById('resultCount');
 
@@ -508,6 +516,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let searchTimer = null;
     let searchRequestId = 0;
+    let nextProductPage = 1;
+    let hasMoreProducts = false;
+    let isLoadingProducts = false;
 
 
     /*
@@ -528,26 +539,6 @@ document.addEventListener('DOMContentLoaded', function () {
         | Empty Search
         |--------------------------------------------------------------------------
         */
-
-        if (skuProductId.length === 0 && categoryFilter.value.length === 0) {
-
-            searchRequestId++;
-
-            productList.innerHTML = '';
-
-            productTable.classList.add('hidden');
-
-            productLoader.classList.add('hidden');
-
-            noResult.classList.add('hidden');
-
-            resultCount.classList.add('hidden');
-
-            productEmpty.classList.remove('hidden');
-
-            return;
-        }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -578,33 +569,34 @@ document.addEventListener('DOMContentLoaded', function () {
     |--------------------------------------------------------------------------
     */
 
-    function searchProduct(skuProductId, autoAdd = false) {
+    function searchProduct(skuProductId, autoAdd = false, page = 1, append = false) {
 
         const categoryId = categoryFilter.value;
-        const requestId = ++searchRequestId;
 
-        if (skuProductId.length === 0 && categoryId.length === 0) {
-            productList.innerHTML = '';
-            productTable.classList.add('hidden');
-            productLoader.classList.add('hidden');
-            noResult.classList.add('hidden');
-            resultCount.classList.add('hidden');
-            productEmpty.classList.remove('hidden');
-
+        if (append && (isLoadingProducts || !hasMoreProducts)) {
             return;
         }
 
-        productLoader.classList.remove('hidden');
+        const requestId = append ? searchRequestId : ++searchRequestId;
+        isLoadingProducts = true;
 
-        productEmpty.classList.add('hidden');
+        if (append) {
+            productLoadMore.classList.remove('hidden');
+        } else {
+            nextProductPage = 1;
+            hasMoreProducts = false;
+            productLoader.classList.remove('hidden');
 
-        noResult.classList.add('hidden');
+            productEmpty.classList.add('hidden');
 
-        productTable.classList.add('hidden');
+            noResult.classList.add('hidden');
 
-        resultCount.classList.add('hidden');
+            productTable.classList.add('hidden');
 
-        productList.innerHTML = '';
+            resultCount.classList.add('hidden');
+
+            productList.innerHTML = '';
+        }
 
 
         const url =
@@ -612,7 +604,9 @@ document.addEventListener('DOMContentLoaded', function () {
             "?sku_product_id=" +
             encodeURIComponent(skuProductId) +
             "&category_id=" +
-            encodeURIComponent(categoryId);
+            encodeURIComponent(categoryId) +
+            "&page=" +
+            encodeURIComponent(page);
 
 
         fetch(url, {
@@ -644,20 +638,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            isLoadingProducts = false;
             productLoader.classList.add('hidden');
+            productLoadMore.classList.add('hidden');
 
             if (
                 !data.success ||
                 !Array.isArray(data.products) ||
                 data.products.length === 0
             ) {
-                productTable.classList.add('hidden');
-                noResult.classList.remove('hidden');
+                if (!append) {
+                    productTable.classList.add('hidden');
+                    noResult.classList.remove('hidden');
+                }
                 return;
             }
 
+            hasMoreProducts = Boolean(data.pagination?.has_more_pages);
+            nextProductPage = page + 1;
+
             resultCount.textContent =
-                data.products.length + ' Products';
+                (data.pagination?.total ?? productList.children.length + data.products.length) + ' Products';
 
             resultCount.classList.remove('hidden');
 
@@ -757,9 +758,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            isLoadingProducts = false;
             console.error('Product Search Error:', error);
 
             productLoader.classList.add('hidden');
+            productLoadMore.classList.add('hidden');
 
             productTable.classList.add('hidden');
 
@@ -770,6 +773,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     }
+
+    const productScrollObserver = new IntersectionObserver(function (entries) {
+
+        if (!entries[0].isIntersecting || !hasMoreProducts || isLoadingProducts) {
+            return;
+        }
+
+        searchProduct(searchInput.value.trim(), false, nextProductPage, true);
+
+    }, {
+        rootMargin: '160px 0px',
+    });
+
+    productScrollObserver.observe(productScrollSentinel);
+
+    // Display the first 20 active products as soon as the POS page opens.
+    searchProduct('');
 
 
     /*

@@ -135,16 +135,6 @@ class PosController extends Controller
         $search = trim($request->sku_product_id ?? '');
         $categoryId = $request->integer('category_id');
 
-        if ($search === '' && !$categoryId) {
-
-            return response()->json([
-                'success' => false,
-                'products' => [],
-                'message' => 'Search value or category is required.',
-            ]);
-        }
-
-
         $products = $this->product
             ->where('status', 'active')
             ->when($categoryId, function ($query) use ($categoryId) {
@@ -179,13 +169,19 @@ class PosController extends Controller
                 'image',
                 'price',
             ])
-            ->limit(20)
-            ->get();
+            ->orderBy('name')
+            ->orderBy('id')
+            ->paginate(20);
 
 
         return response()->json([
             'success' => true,
-            'products' => $products,
+            'products' => $products->items(),
+            'pagination' => [
+                'current_page' => $products->currentPage(),
+                'has_more_pages' => $products->hasMorePages(),
+                'total' => $products->total(),
+            ],
         ]);
     }
 
