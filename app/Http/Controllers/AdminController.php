@@ -35,7 +35,7 @@ class AdminController extends Controller
             'to' => ['nullable', 'date', 'after_or_equal:from'],
             'store_id' => ['nullable', 'integer', 'exists:store,id'],
         ]);
-        $selectedFrom = $filters['from'] ?? now()->subDays(6)->toDateString();
+        $selectedFrom = $filters['from'] ?? today()->toDateString();
         $selectedTo = $filters['to'] ?? today()->toDateString();
         $selectedStoreId = $filters['store_id'] ?? null;
         $periodStart = Carbon::parse($selectedFrom)->startOfDay();
