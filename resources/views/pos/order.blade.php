@@ -11,7 +11,7 @@
             {{-- =========================================================
                 LEFT SIDE : PRODUCT SEARCH
             ========================================================== --}}
-            <div class="lg:col-span-7">
+            <div class="lg:col-span-8">
 
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
@@ -172,7 +172,7 @@
                                        text-xs font-semibold text-slate-500"
                             >
 
-                                <div class="w-14">
+                                <div class="w-32">
                                     Image
                                 </div>
 
@@ -180,7 +180,7 @@
                                     Product
                                 </div>
 
-                                <div class="w-28 text-right">
+                                <div class="w-36 text-right">
                                     Price
                                 </div>
 
@@ -208,7 +208,7 @@
             {{-- =========================================================
                 RIGHT SIDE : BILL
             ========================================================== --}}
-            <div class="lg:col-span-5">
+            <div class="lg:col-span-4">
 
                 <div
                     class="bg-white rounded-2xl border border-slate-200 shadow-sm
@@ -700,7 +700,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.type = 'button';
 
                 row.className =
-                    'w-full flex items-center text-left px-3 py-3 ' +
+                    'w-full flex items-center text-left px-3 py-4 ' +
                     'border-b border-slate-100 last:border-b-0 ' +
                     'hover:bg-emerald-50 transition bg-white';
 
@@ -708,32 +708,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.dataset.name = product.name;
                 row.dataset.price = product.price;
 
-                const image = product.image
-                    ? "{{ asset('') }}" + product.image
-                    : "{{ asset('images/no-product.png') }}";
+                const image = getProductImageUrl(product.image);
 
                 row.innerHTML = `
 
                     <div
-                        class="w-14 h-14 rounded-lg bg-slate-100
+                        class="w-32 h-32 rounded-xl bg-slate-100 p-2
                             overflow-hidden shrink-0"
                     >
                         <img
                             src="${image}"
                             alt="${escapeHtml(product.name)}"
-                            class="w-full h-full object-cover"
+                            class="w-full h-full object-contain"
                             onerror="this.onerror=null;this.src='{{ asset('images/no-product.png') }}';"
                         >
                     </div>
 
                     <div class="flex-1 min-w-0 px-4">
-                        <p class="text-sm font-semibold text-slate-800 truncate">
+                        <p class="text-base font-semibold leading-6 text-slate-800">
                             ${escapeHtml(product.name)}
+                        </p>
+                        <p class="mt-1 text-sm text-slate-400">
+                            SKU: ${escapeHtml(product.sku_product_id || product.barcode_base || 'N/A')}
                         </p>
                     </div>
 
-                    <div class="w-28 text-right">
-                        <p class="text-sm font-bold text-[#128C7E]">
+                    <div class="w-36 text-right">
+                        <p class="text-base font-bold text-[#128C7E]">
                             ₹${formatPrice(product.price)}
                         </p>
                     </div>
@@ -1598,6 +1599,24 @@ function stopBarcodeScanner()
             value ?? '';
 
         return div.innerHTML;
+
+    }
+
+    function getProductImageUrl(image) {
+
+        const placeholder = "{{ asset('images/no-product.png') }}";
+
+        if (!image) {
+            return placeholder;
+        }
+
+        const imagePath = String(image).trim();
+
+        if (/^(https?:)?\/\//i.test(imagePath) || imagePath.startsWith('data:')) {
+            return imagePath;
+        }
+
+        return "{{ asset('') }}" + imagePath.replace(/^\/+/, '');
 
     }
 
