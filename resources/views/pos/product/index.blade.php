@@ -50,7 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let page = 1, nextPage = 1, loading = false, cart = {}, searchTimer;
 
     const escapeHtml = value => String(value || '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
-    const imageUrl = image => image ? assetBase + image : fallbackImage;
+    const imageUrl = image => {
+        if (!image) return fallbackImage;
+        const imagePath = String(image).trim();
+        if (/^(https?:)?\/\//i.test(imagePath) || imagePath.startsWith('data:')) return imagePath;
+        return assetBase.replace(/\/?$/, '/') + imagePath.replace(/^\/+/, '');
+    };
 
     function addToCart(product) {
         const id = String(product.id);

@@ -59,7 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let page = 1, nextPage = 1, loading = false, cart = {}, timer;
     const esc = value => String(value || '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
     const money = value => `₹${Number(value || 0).toFixed(2)}`;
-    const image = value => value ? assetBase + value : fallbackImage;
+    const image = value => {
+        if (!value) return fallbackImage;
+        const imagePath = String(value).trim();
+        if (/^(https?:)?\/\//i.test(imagePath) || imagePath.startsWith('data:')) return imagePath;
+        return assetBase.replace(/\/?$/, '/') + imagePath.replace(/^\/+/, '');
+    };
     function renderCart() {
         const items = Object.values(cart), sum = items.reduce((a, i) => a + i.price * i.qty, 0);
         total.textContent = money(sum);
