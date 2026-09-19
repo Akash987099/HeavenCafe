@@ -11,9 +11,9 @@
             {{-- =========================================================
                 LEFT SIDE : PRODUCT SEARCH
             ========================================================== --}}
-            <div class="lg:col-span-8">
+            <div class="lg:col-span-8 lg:h-[calc(100vh-3rem)]">
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden lg:h-full lg:flex lg:flex-col">
 
                     {{-- Search --}}
                     <div class="sticky top-0 z-20 p-4 border-b border-slate-200 bg-white">
@@ -67,7 +67,7 @@
 
 
                     {{-- Product Section --}}
-                    <div class="p-4">
+                    <div class="p-4 lg:flex-1 lg:overflow-y-auto">
 
                         <div class="flex items-center justify-between mb-4">
 
