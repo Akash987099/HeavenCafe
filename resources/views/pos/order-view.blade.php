@@ -129,6 +129,17 @@
 
                             </div>
 
+                            {{-- Fulfillment Type --}}
+                            <div class="mt-4">
+                                <label for="fulfillment_type" class="block text-sm font-medium text-slate-700 mb-2">
+                                    Order Type <span class="text-red-500">*</span>
+                                </label>
+                                <select name="fulfillment_type" id="fulfillment_type" required class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#128C7E]/20 focus:border-[#128C7E]">
+                                    <option value="dine_in" @selected(old('fulfillment_type', $order->fulfillment_type ?? 'dine_in') === 'dine_in')>Dine In</option>
+                                    <option value="packing" @selected(old('fulfillment_type', $order->fulfillment_type ?? 'dine_in') === 'packing')>Packing / Takeaway</option>
+                                </select>
+                            </div>
+
                         </div>
 
                     </div>
@@ -587,6 +598,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openRazorpay() {
 
+        const fulfillmentType = document.getElementById('fulfillment_type');
+
+        if (!fulfillmentType.value) {
+            alert('Please select an order type first.');
+            upiRadio.checked = false;
+            fulfillmentType.focus();
+            return;
+        }
+
         const amount = parseFloat(
             paymentAmount.value
         );
@@ -780,6 +800,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     customer_phone:
                         document.getElementById('customer_phone').value.trim(),
+
+                    fulfillment_type:
+                        document.getElementById('fulfillment_type').value,
 
                     razorpay_payment_id:
                         response.razorpay_payment_id,

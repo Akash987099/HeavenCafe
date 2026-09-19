@@ -542,6 +542,11 @@ class PosController extends Controller
                 'max:30',
             ],
 
+            'fulfillment_type' => [
+                'required',
+                'in:packing,dine_in',
+            ],
+
             'amount' => [
                 'required',
                 'numeric',
@@ -647,6 +652,8 @@ class PosController extends Controller
         $order->customer_phone =
             $validated['customer_phone'] ?? null;
 
+        $order->fulfillment_type = $validated['fulfillment_type'];
+
         $order->payment_method =
             $validated['payment_method'];
 
@@ -750,6 +757,7 @@ class PosController extends Controller
         // dd($request->all());
         $request->validate([
             'order_id' => 'required|integer',
+            'fulfillment_type' => 'required|in:packing,dine_in',
             'razorpay_payment_id' => 'required|string',
             'razorpay_order_id' => 'required|string',
             'razorpay_signature' => 'required|string',
@@ -832,6 +840,8 @@ class PosController extends Controller
 
         $order->customer_phone =
             $request->customer_phone;
+
+        $order->fulfillment_type = $request->fulfillment_type;
 
         $order->payment_method = 'upi';
 

@@ -14,6 +14,7 @@ class PosOrder extends Model
         'subtotal',
         'discount',
         'grand_total',
+        'fulfillment_type',
         'status',
         'razorpay_order_id',
         'razorpay_payment_id',
