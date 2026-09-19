@@ -37,7 +37,7 @@ class PosController extends Controller
         $this->user = Auth::guard('pos')->user();
     }
     
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::guard('pos')->user();
 
@@ -95,6 +95,96 @@ class PosController extends Controller
             ->whereIn('pos_user_id', $userIDs)
             ->count();
 
+        $filters = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+        ]);
+        $selectedFrom = $filters['from'] ?? now()->subDays(6)->toDateString();
+        $selectedTo = $filters['to'] ?? today()->toDateString();
+        $reportStart = \Illuminate\Support\Carbon::parse($selectedFrom)->startOfDay();
+        $reportEnd = \Illuminate\Support\Carbon::parse($selectedTo)->endOfDay();
+
+        // Revenue is calculated only from completed payments in the selected date range.
+        $paidInRange = PosOrder::query()
+            ->whereIn('pos_user_id', $userIDs)
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$reportStart, $reportEnd]);
+
+        $todayRevenue = (float) (clone $paidInRange)->sum('grand_total');
+        $todaySales = (clone $paidInRange)->count();
+        $todayAverageSale = $todaySales ? $todayRevenue / $todaySales : 0;
+        $pendingOrders = PosOrder::query()
+            ->whereIn('pos_user_id', $userIDs)
+            ->where('status', 'pending')
+            ->whereBetween('created_at', [$reportStart, $reportEnd])
+            ->count();
+
+        $rangeDays = $reportStart->diffInDays($reportEnd) + 1;
+        $yesterdayRevenue = (float) PosOrder::query()
+            ->whereIn('pos_user_id', $userIDs)
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [
+                $reportStart->copy()->subDays($rangeDays),
+                $reportStart->copy()->subDay()->endOfDay(),
+            ])
+            ->sum('grand_total');
+        $revenueChange = $yesterdayRevenue > 0
+            ? (($todayRevenue - $yesterdayRevenue) / $yesterdayRevenue) * 100
+            : null;
+
+        $dailySales = [];
+        for ($date = $reportStart->copy(); $date->lte($reportEnd); $date->addDay()) {
+            $dailySales[$date->toDateString()] = 0.0;
+        }
+        (clone $paidInRange)->get(['grand_total', 'created_at'])->each(function ($order) use (&$dailySales) {
+            $date = $order->created_at->toDateString();
+            if (array_key_exists($date, $dailySales)) {
+                $dailySales[$date] += (float) $order->grand_total;
+            }
+        });
+        $chartMax = max(1, max($dailySales));
+        $chartCount = count($dailySales);
+        $dailyChartPoints = [];
+        foreach (array_values($dailySales) as $index => $amount) {
+            $x = 36 + ($index * (628 / max(1, $chartCount - 1)));
+            $y = 210 - (($amount / $chartMax) * 170);
+            $dailyChartPoints[] = round($x, 1) . ',' . round($y, 1);
+        }
+
+        $paymentColors = ['#2563eb', '#f97316', '#10b981', '#8b5cf6', '#ec4899'];
+        $paymentBreakdown = (clone $paidInRange)
+            ->get(['grand_total', 'payment_method'])
+            ->groupBy(fn ($order) => $order->payment_method ?: 'Other')
+            ->map(fn ($orders, $method) => [
+                'label' => ucfirst($method),
+                'total' => (float) $orders->sum('grand_total'),
+            ])
+            ->sortByDesc('total')
+            ->values()
+            ->map(function ($method, $index) use ($todayRevenue, $paymentColors) {
+                $method['percent'] = $todayRevenue > 0 ? ($method['total'] / $todayRevenue) * 100 : 0;
+                $method['color'] = $paymentColors[$index % count($paymentColors)];
+                return $method;
+            });
+
+        $paymentGradient = $paymentBreakdown->isEmpty()
+            ? '#e2e8f0 0 100%'
+            : $paymentBreakdown->reduce(function ($gradient, $method) {
+                $start = $gradient['position'];
+                $end = $start + $method['percent'];
+                $gradient['segments'][] = $method['color'] . ' ' . $start . '% ' . $end . '%';
+                $gradient['position'] = $end;
+                return $gradient;
+            }, ['position' => 0, 'segments' => []]);
+        $paymentGradient = is_array($paymentGradient)
+            ? implode(', ', $paymentGradient['segments'])
+            : $paymentGradient;
+
+        $recentSales = (clone $paidInRange)
+            ->latest()
+            ->take(4)
+            ->get(['id', 'order_number', 'grand_total', 'payment_method', 'created_at']);
+
         // Store stock is shown in ascending quantity order so low-stock products appear first.
         $storeProducts = StoreProduct::query()
             ->with(['product:id,name,image,sku_product_id'])
@@ -115,6 +205,18 @@ class PosController extends Controller
                 'thisweek',
                 'thismonth',
                 'totalorder',
+                'todayRevenue',
+                'todaySales',
+                'todayAverageSale',
+                'pendingOrders',
+                'revenueChange',
+                'dailySales',
+                'dailyChartPoints',
+                'paymentBreakdown',
+                'paymentGradient',
+                'selectedFrom',
+                'selectedTo',
+                'recentSales',
                 'storeProducts',
                 'lowStockCount'
             )
