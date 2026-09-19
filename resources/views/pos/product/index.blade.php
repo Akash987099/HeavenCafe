@@ -104,8 +104,22 @@ document.addEventListener('DOMContentLoaded', () => {
         cartInputs.innerHTML = items.map((item, index) => `<input type="hidden" name="cart[${index}][id]" value="${item.id}"><input type="hidden" name="cart[${index}][qty]" value="${item.qty}">`).join('');
         cartTotalElement.innerHTML = `&#8377;${formatMoney(total)}`;
         if (!items.length) { cartItems.innerHTML = '<div id="emptyCart" class="min-h-[260px] flex flex-col items-center justify-center text-center text-slate-400"><i class="fas fa-shopping-cart text-3xl mb-3"></i><p class="text-sm">No products added yet</p></div>'; return; }
-        cartItems.innerHTML = items.map(item => `<div class="border border-slate-200 rounded-xl p-3 bg-slate-50"><div class="flex gap-3 items-center"><img src="${imageUrl(item.image)}" onerror="this.src='${fallbackImage}'" class="w-11 h-11 rounded-lg object-cover bg-white border border-slate-200"><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-800 truncate">${escapeHtml(item.name)}</p><p class="text-xs text-[#128C7E] mt-1">&#8377;${formatMoney(item.price)} &times; ${item.qty}</p></div><button type="button" data-action="remove" data-id="${item.id}" class="w-8 h-8 rounded-lg text-rose-500 bg-rose-50"><i class="fas fa-trash text-xs"></i></button></div><div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-200"><div class="flex items-center gap-2"><button type="button" data-action="minus" data-id="${item.id}" class="w-7 h-7 rounded-lg border bg-white">&minus;</button><span class="w-5 text-center text-sm font-semibold">${item.qty}</span><button type="button" data-action="plus" data-id="${item.id}" class="w-7 h-7 rounded-lg border bg-white">+</button></div><span class="text-sm font-bold text-[#128C7E]">&#8377;${formatMoney(item.price * item.qty)}</span></div></div>`).join('');
+        cartItems.innerHTML = items.map(item => `<div class="border border-slate-200 rounded-xl p-3 bg-slate-50"><div class="flex gap-3 items-center"><img src="${imageUrl(item.image)}" onerror="this.src='${fallbackImage}'" class="w-11 h-11 rounded-lg object-cover bg-white border border-slate-200"><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-800 truncate">${escapeHtml(item.name)}</p><p class="text-xs text-[#128C7E] mt-1">&#8377;${formatMoney(item.price)} &times; ${item.qty}</p></div><button type="button" data-action="remove" data-id="${item.id}" class="w-8 h-8 rounded-lg text-rose-500 bg-rose-50"><i class="fas fa-trash text-xs"></i></button></div><div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-200"><div class="flex items-center gap-2"><button type="button" data-action="minus" data-id="${item.id}" class="w-7 h-7 rounded-lg border bg-white">&minus;</button><input type="number" min="1" max="${item.storeQty}" value="${item.qty}" data-action="qty" data-id="${item.id}" aria-label="Quantity for ${escapeHtml(item.name)}" class="h-7 w-14 rounded-lg border border-slate-300 bg-white text-center text-sm font-semibold focus:border-[#128C7E] focus:outline-none"><button type="button" data-action="plus" data-id="${item.id}" class="w-7 h-7 rounded-lg border bg-white">+</button></div><span class="text-sm font-bold text-[#128C7E]">&#8377;${formatMoney(item.price * item.qty)}</span></div><p class="mt-2 text-right text-[11px] text-slate-400">Maximum available: ${item.storeQty}</p></div>`).join('');
     }
+
+    cartItems.addEventListener('change', event => {
+        const input = event.target.closest('input[data-action="qty"]');
+        if (!input) return;
+
+        const item = cart[input.dataset.id];
+        if (!item) return;
+
+        const enteredQty = Number.parseInt(input.value, 10);
+        const safeQty = Math.max(1, Math.min(item.storeQty, Number.isFinite(enteredQty) ? enteredQty : 1));
+        if (enteredQty > item.storeQty) alert(`Only ${item.storeQty} item(s) are available.`);
+        item.qty = safeQty;
+        renderCart();
+    });
 
     function productCard(product) {
         const card = document.createElement('article');

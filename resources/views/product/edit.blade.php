@@ -214,18 +214,18 @@
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="vehicle_name" class="form-label">Assign Store</label>
-                                    <select type="text" class="form-control" id="assign_store" name="assign_store">
-                                        <option value="0">------Select Types------</option>
-                                        <option value="1">------Assign Store------</option>
+                                    <label for="assign_store" class="form-label">Assign Store <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="assign_store" name="assign_store" required>
+                                        <option value="" disabled>------Select Store Assignment------</option>
+                                        <option value="1" @selected((string) old('assign_store', $product->is_store) === '1')>Assign Store</option>
                                     </select>    
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="vehicle_number" class="form-label">Store QTY</label>
-                                    <input type="text" class="form-control" id="store_qty" name="store_qty" value="{{$product->store_qty}}" placeholder="Enter Details">
+                                    <label for="store_qty" class="form-label">Store QTY <span class="text-danger">*</span></label>
+                                    <input type="number" min="0" step="1" class="form-control" id="store_qty" name="store_qty" value="{{ old('store_qty', $product->store_qty) }}" placeholder="Enter store quantity" required>
                                 </div>
                             </div>
 

@@ -21,6 +21,17 @@
                     </p>
                 </div>
 
+                <form method="GET" action="{{ route('pos.bills') }}" class="flex flex-1 max-w-md items-center gap-2">
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="search" name="search" value="{{ $search }}" placeholder="Search order, customer or product..." class="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-[#128C7E]">
+                    </div>
+                    <button type="submit" class="h-10 rounded-xl bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-700">Search</button>
+                    @if($search)
+                        <a href="{{ route('pos.bills') }}" class="text-xs font-semibold text-slate-500 hover:text-rose-600">Clear</a>
+                    @endif
+                </form>
+
                 <a
                     href="{{ route('pos.order') }}"
                     class="inline-flex items-center gap-2
@@ -37,6 +48,51 @@
 
         </div>
 
+
+        {{-- Customer self-orders --}}
+        <div class="mb-6 bg-white rounded-2xl border border-orange-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-orange-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Customer Self Orders</h2>
+                    <p class="text-xs text-slate-400 mt-1">Orders placed directly by customers for this store.</p>
+                </div>
+                <span class="inline-flex px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold">{{ $customerOrders->total() }} orders</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-orange-50"><tr><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Order no.</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Customer</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Items</th><th class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Amount</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Payment</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Order type</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Order status</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Date</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Action</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($customerOrders as $customerOrder)
+                            <tr class="hover:bg-orange-50/40 transition">
+                                <td class="px-5 py-4 font-semibold text-slate-800">{{ $customerOrder->order_number }}<p class="mt-1 text-[11px] font-normal text-orange-600">Customer self order</p></td>
+                                <td class="px-5 py-4"><p class="font-semibold text-slate-800">{{ $customerOrder->customer_name }}</p><p class="mt-1 text-xs text-slate-400">{{ $customerOrder->customer_mobile ?: ($customerOrder->customer_email ?: '-') }}</p></td>
+                                <td class="px-5 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        @foreach($customerOrder->items->take(2) as $item)
+                                            <span class="text-xs text-slate-600 max-w-[220px] truncate">{{ $item->product_name }} × {{ $item->quantity }}</span>
+                                        @endforeach
+                                        @if($customerOrder->items->count() > 2)
+                                            <span class="text-xs text-orange-600 font-medium">+ {{ $customerOrder->items->count() - 2 }} more</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4 text-right font-bold text-orange-700">₹{{ number_format($customerOrder->grand_total, 2) }}</td>
+                                <td class="px-5 py-4 text-center"><span class="inline-flex px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">{{ ucfirst($customerOrder->payment_status ?? 'pending') }}</span></td>
+                                <td class="px-5 py-4 text-center"><span class="inline-flex px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">{{ ($customerOrder->fulfillment_type ?? 'packing') === 'dine_in' ? 'Dine In' : 'Packing' }}</span></td>
+                                <td class="px-5 py-4 text-center"><span class="inline-flex px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">{{ ucfirst($customerOrder->status) }}</span></td>
+                                <td class="px-5 py-4 text-center whitespace-nowrap"><p class="text-sm text-slate-600">{{ $customerOrder->created_at->format('d M Y') }}</p><p class="mt-1 text-xs text-slate-400">{{ $customerOrder->created_at->format('h:i A') }}</p></td>
+                                <td class="px-5 py-4 text-center"><a href="{{ route('pos.customer-orders.view', $customerOrder) }}" class="inline-flex items-center justify-center rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-orange-600 hover:text-white">View</a></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="9" class="px-5 py-8 text-center text-sm text-slate-400">No customer self-orders for this store yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            @if($customerOrders->hasPages())
+                <div class="border-t border-slate-100 px-5 py-3">{{ $customerOrders->links('shared.pagination') }}</div>
+            @endif
+        </div>
 
         {{-- Bills Card --}}
         <div

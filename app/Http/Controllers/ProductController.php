@@ -253,6 +253,8 @@ class ProductController extends Controller
             'ac_price' => 'required|numeric|min:0',
             'in_stock' => 'required|boolean',
             'stock' => 'required|integer|min:0',
+            'assign_store' => 'required|in:1',
+            'store_qty' => 'required|integer|min:0',
         ]);
 
         $awbNumber = $this->generateUniqueAwb();
@@ -330,6 +332,8 @@ class ProductController extends Controller
             'ac_price' => 'required|numeric|min:0',
             'in_stock' => 'required|boolean',
             'stock' => 'required|integer|min:0',
+            'assign_store' => 'required|in:1',
+            'store_qty' => 'required|integer|min:0',
         ]);
 
         $product = $this->product->find($request->id);

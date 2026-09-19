@@ -21,6 +21,10 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::post('/payment/verify', 'verifyRazorpayPayment')->name('order.razorpay.verify');
 
         Route::get('/bills', 'bills')->name('bills');
+        Route::get('/customer-orders/{order}/receipt', 'customerOrderReceipt')->name('customer-orders.receipt');
+        Route::get('/customer-orders/{order}/receipt/download', 'downloadCustomerOrderReceipt')->name('customer-orders.receipt.download');
+        Route::post('/customer-orders/{order}/delivered', 'markCustomerOrderDelivered')->name('customer-orders.delivered');
+        Route::get('/customer-orders/{order}', 'customerOrderView')->name('customer-orders.view');
 
         Route::get('/kitchen/orders', 'kitchenOrders')->name('kitchen.orders');
         Route::get('/kitchen/alerts', 'kitchenAlerts')->name('kitchen.alerts');

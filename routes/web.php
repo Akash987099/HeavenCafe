@@ -52,6 +52,7 @@ use App\Http\Controllers\ProductPositionController;
 use App\Http\Controllers\PosUserController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\Api\FaqController as ApiFaqController;
+use App\Http\Controllers\CustomerOrderController;
 
 // Cafe
 use App\Http\Controllers\cafe\TypeController;
@@ -70,6 +71,18 @@ Route::prefix('pos')->controller(LoginController::class)->name('pos.')->group(fu
 
 Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'index')->name('home');
+});
+
+// Customer self-order flow. The selected store is kept in the browser session.
+Route::prefix('self-order')->controller(CustomerOrderController::class)->name('customer-order.')->group(function () {
+    Route::get('/', 'selectStore')->name('select-store');
+    Route::post('/start', 'start')->name('start');
+    Route::get('/menu', 'menu')->name('menu');
+    Route::get('/products', 'products')->name('products');
+    Route::post('/place', 'place')->name('place');
+    Route::get('/success/{order}', 'success')->name('success');
+    Route::get('/receipt/{order}', 'receipt')->name('receipt');
+    Route::get('/receipt/{order}/download', 'downloadReceipt')->name('receipt.download');
 });
 
 // Fallback API route for environments where api route cache/subfolder routing is stale.
@@ -107,6 +120,7 @@ Route::middleware(['auth:admin'])->group(function () {
         // pos Products Order
 
         Route::get('store/order', 'storeOrder')->name('store-order');
+        Route::post('store/order/bulk-deliver', 'bulkDeliverStoreOrders')->name('store-order.bulk-deliver');
         Route::get('store/order/{order}', 'storeOrderView')->name('store-order.view');
         Route::post('store/order/{order}/status', 'updateStoreOrderStatus')->name('store-order.status');
         Route::get('store/order/{order}/invoice', 'downloadStoreOrderInvoice')->name('store-order.invoice');

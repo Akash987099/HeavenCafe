@@ -18,6 +18,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\File;
 use App\Models\Setting;
 use App\Models\Category;
+use App\Models\CustomerOrder;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PosController extends Controller
 {
@@ -683,11 +685,21 @@ class PosController extends Controller
             ->toArray();
     }
 
-    public function bills()
+    public function bills(Request $request)
     {
         $user = Auth::guard('pos')->user();
+        $search = trim((string) $request->query('search', ''));
 
-        $orders = PosOrder::with('details');
+        $orders = PosOrder::with('details')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('order_number', 'like', '%' . $search . '%')
+                        ->orWhere('customer_name', 'like', '%' . $search . '%')
+                        ->orWhere('customer_phone', 'like', '%' . $search . '%')
+                        ->orWhere('customer_email', 'like', '%' . $search . '%')
+                        ->orWhereHas('details', fn ($details) => $details->where('product_name', 'like', '%' . $search . '%'));
+                });
+            });
 
         if ($user->role == 1) {
 
@@ -707,9 +719,76 @@ class PosController extends Controller
 
         $orders = $orders
             ->orderBy('id', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('pos.bills', compact('orders'));
+        // Customer self-orders belong to a store, so every POS user at that
+        // store can see them alongside the manually created POS bills.
+        $customerOrders = CustomerOrder::query()
+            ->with('items')
+            ->where('store_id', $user->store_id)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('order_number', 'like', '%' . $search . '%')
+                        ->orWhere('customer_name', 'like', '%' . $search . '%')
+                        ->orWhere('customer_mobile', 'like', '%' . $search . '%')
+                        ->orWhere('customer_email', 'like', '%' . $search . '%')
+                        ->orWhereHas('items', fn ($items) => $items->where('product_name', 'like', '%' . $search . '%'));
+                });
+            })
+            ->latest('id')
+            ->paginate(20, ['*'], 'self_order_page')
+            ->withQueryString();
+
+        return view('pos.bills', compact('orders', 'customerOrders', 'search'));
+    }
+
+    public function customerOrderView(CustomerOrder $order)
+    {
+        $this->ensureCustomerOrderStore($order);
+        $order->load('store', 'items');
+
+        return view('pos.customer-orders.view-v2', compact('order'));
+    }
+
+    public function customerOrderReceipt(Request $request, CustomerOrder $order)
+    {
+        $this->ensureCustomerOrderStore($order);
+        $order->load('store', 'items');
+
+        return view('customer-order.receipt-v2', [
+            'order' => $order,
+            'autoPrint' => $request->boolean('print'),
+        ]);
+    }
+
+    public function downloadCustomerOrderReceipt(CustomerOrder $order)
+    {
+        $this->ensureCustomerOrderStore($order);
+        $order->load('store', 'items');
+
+        return Pdf::loadView('customer-order.receipt-pdf-v2', compact('order'))
+            ->setPaper('a5')
+            ->download($order->order_number . '-receipt.pdf');
+    }
+
+    public function markCustomerOrderDelivered(CustomerOrder $order)
+    {
+        $this->ensureCustomerOrderStore($order);
+
+        if (strtolower($order->status) !== 'delivered') {
+            $order->update([
+                'status' => 'delivered',
+                'payment_status' => 'completed',
+            ]);
+        }
+
+        return back()->with('success', 'Customer order marked as delivered and payment completed.');
+    }
+
+    private function ensureCustomerOrderStore(CustomerOrder $order): void
+    {
+        abort_unless((int) $order->store_id === (int) Auth::guard('pos')->user()->store_id, 404);
     }
 
     public function createRazorpayOrder($id)

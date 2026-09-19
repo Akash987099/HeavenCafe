@@ -340,4 +340,65 @@ class PosUserController extends Controller
             ->view('pos.product.orders.bill', compact('order'))
             ->header('Content-Disposition', 'attachment; filename="' . $order->order_number . '.html"');
     }
+
+    public function bulkDeliverStoreOrders(Request $request)
+    {
+        $validated = $request->validate([
+            'order_ids' => ['required', 'array', 'min:1'],
+            'order_ids.*' => ['required', 'integer', 'distinct', 'exists:store_orders,id'],
+        ]);
+
+        try {
+            $deliveredCount = DB::transaction(function () use ($validated) {
+                $count = 0;
+                foreach (collect($validated['order_ids'])->sort()->values() as $orderId) {
+                    $order = StoreOrder::query()->with('items')->lockForUpdate()->findOrFail($orderId);
+
+                    // Delivered rows are ignored, so stock can never be added twice.
+                    if ((int) $order->status === 2) {
+                        continue;
+                    }
+
+                    foreach ($order->items as $item) {
+                        $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
+
+                        if ((int) $product->store_qty < $item->quantity) {
+                            throw new \RuntimeException($product->name . ' has insufficient company stock for delivery.');
+                        }
+
+                        $storeProduct = StoreProduct::query()
+                            ->where('store_id', $order->store_id)
+                            ->where('product_id', $item->product_id)
+                            ->lockForUpdate()
+                            ->first();
+
+                        if ($storeProduct) {
+                            $storeProduct->increment('qty', $item->quantity);
+                        } else {
+                            StoreProduct::create([
+                                'store_id' => $order->store_id,
+                                'product_id' => $item->product_id,
+                                'qty' => $item->quantity,
+                            ]);
+                        }
+
+                        $product->decrement('store_qty', $item->quantity);
+                    }
+
+                    $order->update(['status' => 2]);
+                    $count++;
+                }
+
+                return $count;
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', $exception instanceof \RuntimeException
+                ? $exception->getMessage()
+                : 'Selected store orders could not be delivered. No stock was changed.');
+        }
+
+        return back()->with('success', $deliveredCount . ' selected order(s) delivered and store stock updated successfully.');
+    }
 }
