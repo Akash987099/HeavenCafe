@@ -136,8 +136,13 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
-        $dateRange = collect(range(0, $periodStart->diffInDays($periodEnd)))->map(function ($dayOffset) use ($periodStart) {
-            return $periodStart->copy()->addDays($dayOffset);
+        // A line chart needs at least two points. For a one-day filter, show the
+        // six preceding zero-value positions as visual context while keeping KPI totals filtered to that day.
+        $chartStart = $periodStart->isSameDay($periodEnd)
+            ? $periodStart->copy()->subDays(6)
+            : $periodStart->copy();
+        $dateRange = collect(range(0, $chartStart->diffInDays($periodEnd)))->map(function ($dayOffset) use ($chartStart) {
+            return $chartStart->copy()->addDays($dayOffset);
         });
 
         $salesData = (clone $websiteOrders)->select(
@@ -257,8 +262,9 @@ class AdminController extends Controller
         $weeklyOrders = array_sum($ordersValues);
         $weeklySales = round(array_sum($salesValues), 2);
         $averageOrderValue = $weeklyOrders > 0 ? round($weeklySales / $weeklyOrders, 2) : 0;
-        $averageDailySales = round($weeklySales / max(count($salesDetails), 1), 2);
-        $averageDailyOrders = round($weeklyOrders / max(count($salesDetails), 1), 1);
+        $selectedDayCount = $periodStart->diffInDays($periodEnd->copy()->startOfDay()) + 1;
+        $averageDailySales = round($weeklySales / max($selectedDayCount, 1), 2);
+        $averageDailyOrders = round($weeklyOrders / max($selectedDayCount, 1), 1);
 
         $peakSalesDay = collect($salesDetails)->sortByDesc('sales')->first();
         $peakOrdersDay = collect($salesDetails)->sortByDesc('orders')->first();

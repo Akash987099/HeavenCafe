@@ -378,7 +378,7 @@
                         </div>
                         <div class="text-end">
                             <h6 class="mb-1">{{ $formatInr($weeklySales ?? 0) }}</h6>
-                            <p class="text-sm text-secondary mb-0">Average per day: {{ $formatInr($averageDailySales ?? 0) }}</p>
+                            <p class="text-sm text-secondary mb-0">POS: {{ $formatInr($totalPosSales ?? 0) }} · Avg/day: {{ $formatInr($averageDailySales ?? 0) }}</p>
                         </div>
                     </div>
                 </div>
@@ -749,12 +749,10 @@
                   backgroundColor: lineGradient,
                   fill: true,
                   tension: 0.35,
-                  borderWidth: 3,
-                  pointRadius: 4,
-                  pointHoverRadius: 6,
-                  pointBackgroundColor: '#2563eb',
-                  pointBorderColor: '#ffffff',
-                  pointBorderWidth: 2
+                  borderWidth: 2,
+                  borderDash: [5, 4],
+                  pointRadius: 0,
+                  pointHoverRadius: 0
               }, {
                   label: 'Website Revenue',
                   data: {!! json_encode($websiteSalesValues ?? []) !!},
@@ -777,11 +775,11 @@
                   fill: false,
                   tension: 0.35,
                   borderWidth: 2,
-                  pointRadius: 3,
-                  pointHoverRadius: 5,
+                  pointRadius: 6,
+                  pointHoverRadius: 8,
                   pointBackgroundColor: '#f97316',
                   pointBorderColor: '#ffffff',
-                  pointBorderWidth: 2
+                  pointBorderWidth: 3
               }]
           },
           options: {
