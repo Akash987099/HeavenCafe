@@ -16,7 +16,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
                     {{-- Search --}}
-                    <div class="p-4 border-b border-slate-200">
+                    <div class="sticky top-0 z-20 p-4 border-b border-slate-200 bg-white">
 
                         <div class="flex flex-wrap items-center gap-3">
 
