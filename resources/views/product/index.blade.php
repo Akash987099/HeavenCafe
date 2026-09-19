@@ -101,6 +101,10 @@
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
                                         Stock</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                        Assign Store</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                        Store QTY</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
                                         Tax</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Add
                                         Combo</th>
@@ -210,6 +214,20 @@
                                                 class="text-xs font-weight-bold mb-0 text-info">
                                                 Stock
                                             </a>
+                                        </td>
+
+                                        <td>
+                                            <select class="form-control text-xs font-weight-bold store-assignment" data-id="{{ $item->id }}">
+                                                <option value="1" @selected((int) $item->is_store === 1)>Assigned</option>
+                                                <option value="0" @selected((int) $item->is_store === 0)>Not Assigned</option>
+                                            </select>
+                                        </td>
+
+                                        <td>
+                                            <div class="d-flex gap-1 align-items-center">
+                                                <input type="number" min="0" step="1" class="form-control text-xs store-qty" data-id="{{ $item->id }}" value="{{ $item->store_qty }}" style="min-width:75px;">
+                                                <button type="button" class="btn btn-outline-primary btn-sm mb-0 save-store-settings" data-id="{{ $item->id }}">Save</button>
+                                            </div>
                                         </td>
 
                                         <td>
@@ -658,6 +676,41 @@
                 });
             });
 
+            $('.save-store-settings').on('click', function() {
+                var id = $(this).data('id');
+                var button = $(this);
+                var assignment = $('.store-assignment[data-id="' + id + '"]').val();
+                var qty = $('.store-qty[data-id="' + id + '"]').val();
+
+                if (qty === '' || Number(qty) < 0 || !Number.isInteger(Number(qty))) {
+                    showNotification('warning', 'Store QTY must be a whole number of 0 or more.');
+                    return;
+                }
+
+                button.prop('disabled', true).text('Saving...');
+                $.ajax({
+                    url: "{{ route('product.store_settings') }}",
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        id: id,
+                        assign_store: assignment,
+                        store_qty: qty
+                    },
+                    success: function(res) {
+                        showNotification('success', res.message || 'Store settings updated.');
+                    },
+                    error: function(xhr) {
+                        var message = xhr.responseJSON && xhr.responseJSON.message
+                            ? xhr.responseJSON.message
+                            : 'Store settings could not be updated.';
+                        showNotification('danger', message);
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).text('Save');
+                    }
+                });
+            });
         });
     </script>
 @endsection

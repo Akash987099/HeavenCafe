@@ -203,6 +203,7 @@
                                     <select class="form-control" id="assign_store" name="assign_store" required>
                                         <option value="" selected disabled>------Select Store Assignment------</option>
                                         <option value="1" @selected(old('assign_store') === '1')>Assign Store</option>
+                                        <option value="0" @selected(old('assign_store') === '0')>Do Not Assign Store</option>
                                     </select>    
                                 </div>
                             </div>

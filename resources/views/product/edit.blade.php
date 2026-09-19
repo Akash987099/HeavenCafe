@@ -218,6 +218,7 @@
                                     <select class="form-control" id="assign_store" name="assign_store" required>
                                         <option value="" disabled>------Select Store Assignment------</option>
                                         <option value="1" @selected((string) old('assign_store', $product->is_store) === '1')>Assign Store</option>
+                                        <option value="0" @selected((string) old('assign_store', $product->is_store) === '0')>Do Not Assign Store</option>
                                     </select>    
                                 </div>
                             </div>

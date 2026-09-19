@@ -194,6 +194,7 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('status', 'status')->name('status');
         Route::post('update', 'update')->name('update');
+        Route::post('store-settings', 'updateStoreSettings')->name('store_settings');
         Route::get('barcode', 'barcode')->name('barcode');
         Route::post('barcode_print', 'barcode_print')->name('barcode_print');
         // Gallery

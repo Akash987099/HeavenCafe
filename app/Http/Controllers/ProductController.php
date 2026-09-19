@@ -253,7 +253,7 @@ class ProductController extends Controller
             'ac_price' => 'required|numeric|min:0',
             'in_stock' => 'required|boolean',
             'stock' => 'required|integer|min:0',
-            'assign_store' => 'required|in:1',
+            'assign_store' => 'required|boolean',
             'store_qty' => 'required|integer|min:0',
         ]);
 
@@ -332,7 +332,7 @@ class ProductController extends Controller
             'ac_price' => 'required|numeric|min:0',
             'in_stock' => 'required|boolean',
             'stock' => 'required|integer|min:0',
-            'assign_store' => 'required|in:1',
+            'assign_store' => 'required|boolean',
             'store_qty' => 'required|integer|min:0',
         ]);
 
@@ -383,6 +383,26 @@ class ProductController extends Controller
         }
 
         return redirect()->back()->with('error', 'Update failed!');
+    }
+
+    public function updateStoreSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:products,id'],
+            'assign_store' => ['required', 'boolean'],
+            'store_qty' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $product = $this->product->findOrFail($validated['id']);
+        $product->update([
+            'is_store' => (int) $validated['assign_store'],
+            'store_qty' => (int) $validated['store_qty'],
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Store settings updated successfully.',
+        ]);
     }
 
     public function status(Request $request)
