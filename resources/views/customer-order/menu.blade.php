@@ -74,7 +74,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function add(product) { const id = String(product.id), available = Number(product.available_qty) || 0; if (!available) return; if (cart[id] && cart[id].qty >= cart[id].available) return alert(`Only ${cart[id].available} item(s) are available.`); cart[id] = cart[id] ? {...cart[id], qty: cart[id].qty + 1} : {id: product.id, name: product.name, image: product.image, price: Number(product.price) || 0, available, qty: 1}; renderCart(); }
     cartItems.addEventListener('click', event => { const button = event.target.closest('button[data-action]'); if (!button || !cart[button.dataset.id]) return; const item = cart[button.dataset.id], action = button.dataset.action; if (action === 'remove') delete cart[item.id]; if (action === 'minus') item.qty > 1 ? item.qty-- : delete cart[item.id]; if (action === 'plus') { if (item.qty >= item.available) return alert(`Only ${item.available} item(s) are available.`); item.qty++; } renderCart(); });
     function card(product) { const available = Number(product.available_qty) || 0, node = document.createElement('article'); node.className = 'rounded-xl border border-slate-200 p-3'; node.innerHTML = `<img src="${image(product.image)}" onerror="this.src='${fallbackImage}'" class="h-36 w-full rounded-lg bg-slate-100 object-cover"><h3 class="mt-3 truncate text-sm font-bold">${esc(product.name)}</h3><p class="mt-1 text-xs text-slate-400">${available} available</p><div class="mt-4 flex items-center justify-between"><strong class="text-orange-700">${money(product.price)}</strong><button ${available ? '' : 'disabled'} class="add rounded-lg px-3 py-2 text-xs font-semibold ${available ? 'bg-orange-600 text-white hover:bg-orange-700' : 'bg-slate-100 text-slate-400'}">${available ? '+ Add' : 'Out of stock'}</button></div>`; node.querySelector('.add').addEventListener('click', () => add(product)); return node; }
-    async function load(reset = false) { if (loading || !nextPage) return; if (reset) { page = 1; nextPage = 1; grid.innerHTML = ''; } loading = true; loader.classList.remove('hidden'); try { const params = new URLSearchParams({page}); if (search.value.trim()) params.set('search', search.value.trim()); if (category.value) params.set('category', category.value); const response = await fetch(`{{ route('customer-order.products') }}?${params}`, {headers:{Accept:'application/json'}}); if (!response.ok) throw new Error(); const data = await response.json(); data.products.forEach(p => grid.appendChild(card(p))); nextPage = data.next_page; page = nextPage || page; count.textContent = `${grid.children.length} item${grid.children.length === 1 ? '' : 's'}`; empty.classList.toggle('hidden', !!grid.children.length); } catch { loader.textContent = 'Menu could not be loaded. Please refresh.'; } finally { loading = false; if (!nextPage) loader.classList.add('hidden'); } }
+    async function load(reset = false) {
+        // Reset first. Otherwise filtering stops working once the previous list
+        // has reached its final page (where nextPage is null).
+        if (reset) { page = 1; nextPage = 1; grid.innerHTML = ''; }
+        if (loading || !nextPage) return;
+        loading = true;
+        loader.classList.remove('hidden');
+        try {
+            const params = new URLSearchParams({page});
+            if (search.value.trim()) params.set('search', search.value.trim());
+            if (category.value) params.set('category', category.value);
+            const response = await fetch(`{{ route('customer-order.products') }}?${params}`, {headers:{Accept:'application/json'}});
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+            data.products.forEach(p => grid.appendChild(card(p)));
+            nextPage = data.next_page;
+            page = nextPage || page;
+            count.textContent = `${grid.children.length} item${grid.children.length === 1 ? '' : 's'}`;
+            empty.classList.toggle('hidden', !!grid.children.length);
+        } catch {
+            loader.textContent = 'Menu could not be loaded. Please refresh.';
+        } finally {
+            loading = false;
+            if (!nextPage) loader.classList.add('hidden');
+        }
+    }
     const reset = () => load(true); search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reset, 300); }); category.addEventListener('change', reset);
     new IntersectionObserver(entries => { if (entries[0].isIntersecting) load(); }, {rootMargin:'300px'}).observe(document.getElementById('scrollTarget'));
     document.getElementById('orderForm').addEventListener('submit', e => { if (!Object.keys(cart).length) { e.preventDefault(); alert('Please add at least one item.'); } });
