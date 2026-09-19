@@ -10,6 +10,8 @@ use App\Models\SubCategory;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\PosOrder;
+use App\Models\Pos;
+use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
@@ -26,22 +28,39 @@ class AdminController extends Controller
         $this->order = new Order();
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $todayUsers = $this->user->whereDate('created_at', now()->toDateString())->count();
+        $filters = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'store_id' => ['nullable', 'integer', 'exists:store,id'],
+        ]);
+        $selectedFrom = $filters['from'] ?? now()->subDays(6)->toDateString();
+        $selectedTo = $filters['to'] ?? today()->toDateString();
+        $selectedStoreId = $filters['store_id'] ?? null;
+        $periodStart = Carbon::parse($selectedFrom)->startOfDay();
+        $periodEnd = Carbon::parse($selectedTo)->endOfDay();
+        $stores = Store::query()->orderBy('name')->get(['id', 'name']);
+
+        $websiteOrders = Order::query()->whereBetween('created_at', [$periodStart, $periodEnd]);
+        $posOrders = PosOrder::query()
+            ->whereBetween('created_at', [$periodStart, $periodEnd])
+            ->when($selectedStoreId, function ($query) use ($selectedStoreId) {
+                $query->whereIn('pos_user_id', Pos::query()->where('store_id', $selectedStoreId)->pluck('id'));
+            });
+
+        $todayUsers = $this->user->whereBetween('created_at', [$periodStart, $periodEnd])->count();
         $totalUsers = $this->user->count();
 
-        $todayOrders = $this->order->whereDate('created_at', now()->toDateString())->count();
-        $totalOrders = $this->order->count();
-        $todaySales = (float) $this->order->whereDate('created_at', now()->toDateString())->sum('final_amount');
-        $totalSales = (float) $this->order->sum('final_amount');
+        $todayOrders = (clone $websiteOrders)->count();
+        $totalOrders = (clone $websiteOrders)->count();
+        $todaySales = (float) (clone $websiteOrders)->sum('final_amount');
+        $totalSales = (float) (clone $websiteOrders)->sum('final_amount');
 
-        $posOrders = PosOrder::query();
-        $todayPosOrders = (clone $posOrders)->whereDate('created_at', now()->toDateString())->count();
+        $todayPosOrders = (clone $posOrders)->count();
         $totalPosOrders = (clone $posOrders)->count();
         $pendingPosOrders = (clone $posOrders)->where('status', 'pending')->count();
         $todayPosSales = (float) (clone $posOrders)
-            ->whereDate('created_at', now()->toDateString())
             ->where('status', 'completed')
             ->sum('grand_total');
         $totalPosSales = (float) (clone $posOrders)
@@ -62,6 +81,47 @@ class AdminController extends Controller
                 'created_at',
             ]);
 
+        // Combined website + POS reporting. Existing individual dashboard data remains unchanged.
+        $todayCombinedOrders = $todayOrders + $todayPosOrders;
+        $totalCombinedOrders = $totalOrders + $totalPosOrders;
+        $todayCombinedSales = $todaySales + $todayPosSales;
+        $totalCombinedSales = $totalSales + $totalPosSales;
+
+        $recentWebsiteOrders = (clone $websiteOrders)
+            ->latest('id')
+            ->take(8)
+            ->get([
+                'id',
+                'order_no',
+                'final_amount',
+                'payment_method',
+                'payment_status',
+                'status',
+                'created_at',
+            ]);
+        $recentCombinedOrders = collect($recentWebsiteOrders)
+            ->map(fn ($order) => [
+                'source' => 'Website',
+                'order_number' => $order->order_no ?: 'WEB-' . $order->id,
+                'amount' => (float) $order->final_amount,
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
+                'status' => $order->status,
+                'created_at' => $order->created_at,
+            ])
+            ->merge(collect($recentPosOrders)->map(fn ($order) => [
+                'source' => 'POS',
+                'order_number' => $order->order_number,
+                'amount' => (float) $order->grand_total,
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
+                'status' => $order->status,
+                'created_at' => $order->created_at,
+            ]))
+            ->sortByDesc('created_at')
+            ->take(10)
+            ->values();
+
         $totalProducts = Product::count();
         $totalCategories = Category::count();
         $totalSubCategories = SubCategory::count();
@@ -76,26 +136,22 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
-        $periodStart = now()->subDays(6)->startOfDay();
-        $periodEnd = now()->endOfDay();
-        $dateRange = collect(range(0, 6))->map(function ($dayOffset) use ($periodStart) {
+        $dateRange = collect(range(0, $periodStart->diffInDays($periodEnd)))->map(function ($dayOffset) use ($periodStart) {
             return $periodStart->copy()->addDays($dayOffset);
         });
 
-        $salesData = $this->order->select(
+        $salesData = (clone $websiteOrders)->select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('SUM(final_amount) as total')
         )
-            ->whereBetween('created_at', [$periodStart, $periodEnd])
             ->groupBy('date')
             ->orderBy('date', 'ASC')
             ->get();
 
-        $ordersData = $this->order->select(
+        $ordersData = (clone $websiteOrders)->select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
         )
-            ->whereBetween('created_at', [$periodStart, $periodEnd])
             ->groupBy('date')
             ->orderBy('date', 'ASC')
             ->get();
@@ -109,7 +165,7 @@ class AdminController extends Controller
             ->orderBy('date', 'ASC')
             ->get();
 
-        $orderUsersData = $this->order
+        $orderUsersData = Order::query()
             ->leftJoin('users', 'users.id', '=', 'orders.user_id')
             ->select(
                 DB::raw('DATE(orders.created_at) as date'),
@@ -256,6 +312,15 @@ class AdminController extends Controller
             'todayPosSales',
             'totalPosSales',
             'recentPosOrders',
+            'todayCombinedOrders',
+            'totalCombinedOrders',
+            'todayCombinedSales',
+            'totalCombinedSales',
+            'recentCombinedOrders',
+            'stores',
+            'selectedFrom',
+            'selectedTo',
+            'selectedStoreId',
             'totalProducts',
             'totalCategories',
             'totalSubCategories',

@@ -176,6 +176,18 @@
         </div>
     </div>
 
+    <form method="GET" action="{{ route('index') }}" class="card dashboard-card mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label for="dashboard-from" class="form-label text-xs fw-bold text-uppercase text-secondary mb-1">From date</label><input id="dashboard-from" name="from" type="date" value="{{ $selectedFrom }}" max="{{ today()->toDateString() }}" class="form-control"></div>
+                <div class="col-md-3"><label for="dashboard-to" class="form-label text-xs fw-bold text-uppercase text-secondary mb-1">To date</label><input id="dashboard-to" name="to" type="date" value="{{ $selectedTo }}" max="{{ today()->toDateString() }}" class="form-control"></div>
+                <div class="col-md-3"><label for="dashboard-store" class="form-label text-xs fw-bold text-uppercase text-secondary mb-1">POS store</label><select id="dashboard-store" name="store_id" class="form-select"><option value="">All stores</option>@foreach($stores as $store)<option value="{{ $store->id }}" @selected((string) $selectedStoreId === (string) $store->id)>{{ $store->name }}</option>@endforeach</select></div>
+                <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-primary mb-0"><i class="ni ni-filter me-1"></i> Apply filters</button><a href="{{ route('index') }}" class="btn btn-outline-secondary mb-0">Reset</a></div>
+            </div>
+            <p class="text-xs text-secondary mb-0 mt-2">Date range applies to website and POS reporting. Store selection applies to POS data.</p>
+        </div>
+    </form>
+
     <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card dashboard-card dashboard-stat">
@@ -243,6 +255,53 @@
                     </div>
                     <p class="text-sm text-secondary mb-0">{{ $totalProducts ?? 0 }} products across {{ $totalCategories ?? 0 }} categories</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Additive combined reporting: existing website and POS blocks remain below. --}}
+    <div class="card dashboard-card mb-4">
+        <div class="card-header bg-white border-0 p-4 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h5 class="mb-1">Combined Orders Overview</h5>
+                <p class="text-sm text-secondary mb-0">Website and POS order data in one view</p>
+            </div>
+            <span class="badge badge-soft-info">Live combined data</span>
+        </div>
+        <div class="card-body p-4">
+            <div class="summary-grid">
+                <div class="summary-item"><div class="label">Combined Revenue</div><div class="value">{{ $formatInr($totalCombinedSales ?? 0) }}</div><p class="meta">Website + completed POS payments</p></div>
+                <div class="summary-item"><div class="label">Combined Orders</div><div class="value">{{ $totalCombinedOrders ?? 0 }}</div><p class="meta">All website and POS orders</p></div>
+                <div class="summary-item"><div class="label">Today's Revenue</div><div class="value">{{ $formatInr($todayCombinedSales ?? 0) }}</div><p class="meta">Across both order channels</p></div>
+                <div class="summary-item"><div class="label">Today's Orders</div><div class="value">{{ $todayCombinedOrders ?? 0 }}</div><p class="meta">Website + POS orders created today</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card dashboard-card mb-4">
+        <div class="card-header bg-white border-0 p-4 pb-0">
+            <h5 class="mb-1">Latest Combined Orders</h5>
+            <p class="text-sm text-secondary mb-0">Most recent website and POS orders together</p>
+        </div>
+        <div class="card-body p-0 pt-3">
+            <div class="table-responsive">
+                <table class="table align-items-center mb-0">
+                    <thead><tr><th class="ps-4">Source</th><th>Order No.</th><th>Payment</th><th>Status</th><th class="text-end">Amount</th><th class="text-end pe-4">Created At</th></tr></thead>
+                    <tbody>
+                        @forelse($recentCombinedOrders ?? [] as $order)
+                            <tr>
+                                <td class="ps-4"><span class="badge {{ $order['source'] === 'POS' ? 'badge-soft-info' : 'badge-soft-success' }}">{{ $order['source'] }}</span></td>
+                                <td class="fw-bold text-dark">{{ $order['order_number'] }}</td>
+                                <td>{{ ucfirst($order['payment_method'] ?: 'N/A') }}</td>
+                                <td><span class="badge {{ strtolower($order['status'] ?: '') === 'completed' ? 'badge-soft-success' : 'badge-soft-warning' }}">{{ ucfirst($order['status'] ?: 'Pending') }}</span></td>
+                                <td class="text-end">{{ $formatInr($order['amount']) }}</td>
+                                <td class="text-end pe-4">{{ $order['created_at']?->format('d M Y, h:i A') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-center py-4 text-secondary">No website or POS orders found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
