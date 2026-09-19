@@ -218,14 +218,14 @@
 
                                         <td>
                                             <select class="form-control text-xs font-weight-bold store-assignment" data-id="{{ $item->id }}">
-                                                <option value="1" @selected((int) $item->is_store === 1)>Assigned</option>
-                                                <option value="0" @selected((int) $item->is_store === 0)>Not Assigned</option>
+                                                <option value="1" @selected((int) $item->is_store === 1)>Assign Store</option>
+                                                <option value="0" @selected((int) $item->is_store === 0)>Not Assign Store</option>
                                             </select>
                                         </td>
 
                                         <td>
                                             <div class="d-flex gap-1 align-items-center">
-                                                <input type="number" min="0" step="1" class="form-control text-xs store-qty" data-id="{{ $item->id }}" value="{{ $item->store_qty }}" style="min-width:75px;">
+                                                <input type="number" min="0" step="1" class="form-control text-xs store-qty" data-id="{{ $item->id }}" value="{{ $item->store_qty ?? 0 }}" style="min-width:75px;">
                                                 <button type="button" class="btn btn-outline-primary btn-sm mb-0 save-store-settings" data-id="{{ $item->id }}">Save</button>
                                             </div>
                                         </td>
@@ -679,7 +679,7 @@
             $('.save-store-settings').on('click', function() {
                 var id = $(this).data('id');
                 var button = $(this);
-                var assignment = $('.store-assignment[data-id="' + id + '"]').val();
+                var assignStore = $('.store-assignment[data-id="' + id + '"]').val();
                 var qty = $('.store-qty[data-id="' + id + '"]').val();
 
                 if (qty === '' || Number(qty) < 0 || !Number.isInteger(Number(qty))) {
@@ -694,7 +694,7 @@
                     data: {
                         _token: "{{ csrf_token() }}",
                         id: id,
-                        assign_store: assignment,
+                        assign_store: assignStore,
                         store_qty: qty
                     },
                     success: function(res) {
@@ -711,6 +711,7 @@
                     }
                 });
             });
+
         });
     </script>
 @endsection

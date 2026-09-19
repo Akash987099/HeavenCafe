@@ -71,4 +71,9 @@ class Product extends Model
         return $this->hasMany(Combo::class, 'combo_product_id');
     }
 
+    public function storeProducts()
+    {
+        return $this->hasMany(StoreProduct::class, 'product_id');
+    }
+
 }

@@ -394,14 +394,15 @@ class ProductController extends Controller
         ]);
 
         $product = $this->product->findOrFail($validated['id']);
-        $product->update([
-            'is_store' => (int) $validated['assign_store'],
-            'store_qty' => (int) $validated['store_qty'],
-        ]);
+        $product->is_store = (int) $validated['assign_store'];
+        $product->store_qty = (int) $validated['store_qty'];
+        $product->save();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Store settings updated successfully.',
+            'assign_store' => (int) $validated['assign_store'],
+            'store_qty' => (int) $validated['store_qty'],
         ]);
     }
 
