@@ -373,8 +373,8 @@
                 <div class="card-header bg-white border-0 p-4 pb-0">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
-                            <h5 class="mb-1">Revenue Trend</h5>
-                            <p class="text-sm text-secondary mb-0">Daily sales for the last 7 days</p>
+                            <h5 class="mb-1">Combined Revenue Trend</h5>
+                            <p class="text-sm text-secondary mb-0">Website and completed POS revenue for the selected period</p>
                         </div>
                         <div class="text-end">
                             <h6 class="mb-1">{{ $formatInr($weeklySales ?? 0) }}</h6>
@@ -743,7 +743,7 @@
           data: {
               labels: {!! json_encode($salesLabels ?? []) !!},
               datasets: [{
-                  label: 'Revenue',
+                  label: 'Combined Revenue',
                   data: {!! json_encode($salesValues ?? []) !!},
                   borderColor: '#2563eb',
                   backgroundColor: lineGradient,
@@ -755,13 +755,40 @@
                   pointBackgroundColor: '#2563eb',
                   pointBorderColor: '#ffffff',
                   pointBorderWidth: 2
+              }, {
+                  label: 'Website Revenue',
+                  data: {!! json_encode($websiteSalesValues ?? []) !!},
+                  borderColor: '#10b981',
+                  backgroundColor: 'transparent',
+                  fill: false,
+                  tension: 0.35,
+                  borderWidth: 2,
+                  borderDash: [5, 4],
+                  pointRadius: 3,
+                  pointHoverRadius: 5,
+                  pointBackgroundColor: '#10b981',
+                  pointBorderColor: '#ffffff',
+                  pointBorderWidth: 2
+              }, {
+                  label: 'POS Revenue',
+                  data: {!! json_encode($posSalesValues ?? []) !!},
+                  borderColor: '#f97316',
+                  backgroundColor: 'transparent',
+                  fill: false,
+                  tension: 0.35,
+                  borderWidth: 2,
+                  pointRadius: 3,
+                  pointHoverRadius: 5,
+                  pointBackgroundColor: '#f97316',
+                  pointBorderColor: '#ffffff',
+                  pointBorderWidth: 2
               }]
           },
           options: {
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
-                  legend: { display: false },
+                  legend: { display: true, position: 'bottom' },
                   tooltip: {
                       callbacks: {
                           label: function(context) {

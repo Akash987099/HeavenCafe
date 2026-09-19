@@ -148,6 +148,16 @@ class AdminController extends Controller
             ->orderBy('date', 'ASC')
             ->get();
 
+        $posSalesData = (clone $posOrders)
+            ->where('status', 'completed')
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(grand_total) as total')
+            )
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
         $ordersData = (clone $websiteOrders)->select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(*) as count')
@@ -177,12 +187,15 @@ class AdminController extends Controller
             ->get();
 
         $salesMap = $salesData->keyBy('date');
+        $posSalesMap = $posSalesData->keyBy('date');
         $ordersMap = $ordersData->keyBy('date');
         $usersMap = $usersData->keyBy('date');
         $orderUsersMap = $orderUsersData->keyBy('date');
 
         $salesLabels = [];
         $salesValues = [];
+        $websiteSalesValues = [];
+        $posSalesValues = [];
         $ordersLabels = [];
         $ordersValues = [];
         $salesDetails = [];
@@ -190,7 +203,9 @@ class AdminController extends Controller
         foreach ($dateRange as $date) {
             $dateKey = $date->toDateString();
             $label = $date->format('M d');
-            $salesValue = (float) optional($salesMap->get($dateKey))->total;
+            $websiteSalesValue = (float) optional($salesMap->get($dateKey))->total;
+            $posSalesValue = (float) optional($posSalesMap->get($dateKey))->total;
+            $salesValue = $websiteSalesValue + $posSalesValue;
             $ordersValue = (int) optional($ordersMap->get($dateKey))->count;
             $usersValue = (int) optional($usersMap->get($dateKey))->count;
             $customerList = collect(explode('##', (string) optional($orderUsersMap->get($dateKey))->customer_list))
@@ -208,6 +223,8 @@ class AdminController extends Controller
 
             $salesLabels[] = $label;
             $salesValues[] = round($salesValue, 2);
+            $websiteSalesValues[] = round($websiteSalesValue, 2);
+            $posSalesValues[] = round($posSalesValue, 2);
             $ordersLabels[] = $label;
             $ordersValues[] = $ordersValue;
             $salesDetails[] = [
@@ -328,6 +345,8 @@ class AdminController extends Controller
             'productStocks',
             'salesLabels',
             'salesValues',
+            'websiteSalesValues',
+            'posSalesValues',
             'ordersLabels',
             'ordersValues',
             'wallets',
