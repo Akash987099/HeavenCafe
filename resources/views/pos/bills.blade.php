@@ -135,6 +135,14 @@
                                        text-xs font-semibold
                                        text-slate-500 uppercase"
                             >
+                                Order Type
+                            </th>
+
+                            <th
+                                class="px-5 py-3 text-center
+                                       text-xs font-semibold
+                                       text-slate-500 uppercase"
+                            >
                                 Status
                             </th>
 
@@ -286,6 +294,22 @@
                                     >
                                         {{ ucfirst($order->payment_method ?? 'N/A') }}
                                     </span>
+
+                                </td>
+
+
+                                {{-- Dine In / Takeaway --}}
+                                <td class="px-5 py-4 text-center">
+
+                                    @if(($order->fulfillment_type ?? 'dine_in') === 'packing')
+                                        <span class="inline-flex px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 text-xs font-semibold">
+                                            Packing / Takeaway
+                                        </span>
+                                    @else
+                                        <span class="inline-flex px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold">
+                                            Dine In
+                                        </span>
+                                    @endif
 
                                 </td>
 
