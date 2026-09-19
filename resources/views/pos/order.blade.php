@@ -165,30 +165,8 @@
                             class="hidden border border-slate-200 rounded-xl overflow-hidden"
                         >
 
-                            {{-- Table Header --}}
-                            <div
-                                class="flex items-center px-3 py-3
-                                       bg-slate-50 border-b border-slate-200
-                                       text-xs font-semibold text-slate-500"
-                            >
-
-                                <div class="w-32">
-                                    Image
-                                </div>
-
-                                <div class="flex-1 px-4">
-                                    Product
-                                </div>
-
-                                <div class="w-36 text-right">
-                                    Price
-                                </div>
-
-                            </div>
-
-
                             {{-- Dynamic Products --}}
-                            <div id="productList"></div>
+                            <div id="productList" class="grid grid-cols-3 gap-3 p-3"></div>
 
                             <div id="productLoadMore" class="hidden px-3 py-4 text-center text-xs text-slate-400">
                                 <i class="fas fa-spinner fa-spin mr-1"></i> Loading more products...
@@ -700,9 +678,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.type = 'button';
 
                 row.className =
-                    'w-full flex items-center text-left px-3 py-4 ' +
-                    'border-b border-slate-100 last:border-b-0 ' +
-                    'hover:bg-emerald-50 transition bg-white';
+                    'w-full rounded-2xl border border-slate-200 p-3 text-left ' +
+                    'hover:border-[#128C7E] hover:bg-emerald-50 transition bg-white';
 
                 row.dataset.id = product.id;
                 row.dataset.name = product.name;
@@ -712,10 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 row.innerHTML = `
 
-                    <div
-                        class="w-32 h-32 rounded-xl bg-slate-100 p-2
-                            overflow-hidden shrink-0"
-                    >
+                    <div class="h-36 rounded-xl bg-slate-100 p-2 overflow-hidden">
                         <img
                             src="${image}"
                             alt="${escapeHtml(product.name)}"
@@ -724,16 +698,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         >
                     </div>
 
-                    <div class="flex-1 min-w-0 px-4">
-                        <p class="text-base font-semibold leading-6 text-slate-800">
+                    <div class="pt-3">
+                        <p class="min-h-12 text-base font-semibold leading-6 text-slate-800">
                             ${escapeHtml(product.name)}
                         </p>
-                        <p class="mt-1 text-sm text-slate-400">
+                        <p class="mt-1 text-xs text-slate-400 truncate">
                             SKU: ${escapeHtml(product.sku_product_id || product.barcode_base || 'N/A')}
                         </p>
                     </div>
 
-                    <div class="w-36 text-right">
+                    <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <span class="text-xs font-medium text-slate-400">Price</span>
                         <p class="text-base font-bold text-[#128C7E]">
                             ₹${formatPrice(product.price)}
                         </p>
