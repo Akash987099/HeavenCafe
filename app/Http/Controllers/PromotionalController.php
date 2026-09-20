@@ -119,30 +119,40 @@ class PromotionalController extends Controller
 
     public function status(Request $request)
     {
-        $status = $request->value;
-        $id = $request->id;
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:promotionals,id'],
+            'status' => ['required', 'boolean'],
+        ]);
 
-        if (empty($id)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'ID not found'
-            ], 400);
-        }
-
-        $promo = $this->promo->find($id);
-
-        if (!$promo) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Record not found'
-            ], 404);
-        }
-
-        $promo->status = $request->status == '1' ? '0' : '1';
+        $promo = $this->promo->findOrFail($validated['id']);
+        $promo->status = (int) $validated['status'];
         $promo->save();
 
         return response()->json([
-            'status'    => 'success',
-        ], 200);
+            'status' => 'success',
+            'message' => $promo->status ? 'Promotional activated successfully.' : 'Promotional inactivated successfully.',
+        ]);
+    }
+
+    public function delete($id)
+    {
+        try {
+            $promo = $this->promo->findOrFail($id);
+
+            if ($promo->image && str_starts_with($promo->image, 'promotional/') && file_exists(public_path($promo->image))) {
+                unlink(public_path($promo->image));
+            }
+
+            $promo->delete();
+
+            return response()->json(['status' => 'success']);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'status' => 'exceptionError',
+                'error' => 'Promotional could not be deleted.',
+            ], 500);
+        }
     }
 }

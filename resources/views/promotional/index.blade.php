@@ -68,8 +68,8 @@
                                         </td>
 
                                         <td>
-                                            <select class="form-control text-xs status-change" data-id="{{ $item->id }}"
-                                                data-url="{{ route('slider.status') }}">
+                                            <select class="form-control text-xs status-change" data-id="{{ $item->id }}" data-current-status="{{ (int) $item->status }}"
+                                                data-url="{{ route('promotional.status') }}">
                                                 <option value="1" {{ $item->status == 1 ? 'selected' : '' }}>
                                                     Active
                                                 </option>
@@ -115,11 +115,13 @@
         $(document).ready(function() {
             $('.status-change').on('change', function() {
 
-                var product_id = $(this).attr('data-id');
-                var value = $(this).val();
+                var select = $(this);
+                var previousValue = select.data('current-status');
+                var product_id = select.attr('data-id');
+                var value = select.val();
 
                 $.ajax({
-                    url: "{{ route('promotional.status') }}",
+                    url: select.data('url'),
                     type: "POST",
                     data: {
                         _token: "{{ csrf_token() }}",
@@ -127,11 +129,14 @@
                         status: value,
                     },
                     success: function(res) {
-                        console.log(res.message);
+                        select.data('current-status', value);
+                        if (typeof showNotification === 'function') {
+                            showNotification('success', res.message || 'Status updated successfully');
+                        }
                     },
                     error: function(xhr) {
-                        console.log(xhr.responseText);
-                        alert('Something went wrong');
+                        select.val(previousValue);
+                        alert(xhr.responseJSON?.message || 'Something went wrong');
                     }
                 });
             });

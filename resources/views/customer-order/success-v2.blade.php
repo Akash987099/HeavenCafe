@@ -11,9 +11,19 @@
     <main class="max-w-lg mx-auto px-4 py-10">
         <section class="rounded-3xl bg-white p-7 shadow-sm border border-orange-100 text-center">
             <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl font-bold text-emerald-700">✓</div>
-            <p class="mt-5 text-sm font-semibold uppercase tracking-wider text-orange-600">Order placed</p>
+            @if($order->payment_status === 'completed')
+            <p class="mt-5 text-sm font-semibold uppercase tracking-wider text-orange-600">Payment successful</p>
             <h1 class="mt-2 text-2xl font-extrabold">Thank you, {{ $order->customer_name }}!</h1>
-            <p class="mt-3 text-sm text-slate-500">Your order has been sent to <strong>{{ $order->store->name }}</strong>.</p>
+            <p class="mt-3 text-sm text-slate-500">Your paid order has been sent to <strong>{{ $order->store->name }}</strong>.</p>
+            @elseif($order->payment_status === 'failed')
+            <p class="mt-5 text-sm font-semibold uppercase tracking-wider text-rose-600">Payment failed</p>
+            <h1 class="mt-2 text-2xl font-extrabold">Your payment was not completed.</h1>
+            <p class="mt-3 text-sm text-slate-500">No order was sent to <strong>{{ $order->store->name }}</strong>. Please try again.</p>
+            @else
+            <p class="mt-5 text-sm font-semibold uppercase tracking-wider text-amber-600">Payment pending</p>
+            <h1 class="mt-2 text-2xl font-extrabold">We are confirming your payment.</h1>
+            <p class="mt-3 text-sm text-slate-500">Please wait for PayU confirmation before considering this order placed.</p>
+            @endif
             @if(session('order_email_sent'))<p class="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Order confirmation sent to {{ session('order_email_sent') }}.</p>@endif
 
             <div class="mt-6 overflow-hidden rounded-2xl border border-dashed border-orange-200 text-left shadow-sm">

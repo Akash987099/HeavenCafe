@@ -1800,16 +1800,16 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'store_gallery.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarCatalog" role="button"
-                        aria-expanded="{{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'store_gallery.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarCatalog">
                         <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                             <i class="fas fa-boxes-stacked text-dark"></i>
                         </div>
                         <span class="nav-link-text ms-1">Catalog</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? 'show' : '' }}" id="sidebarCatalog">
+                    <div class="collapse {{ request()->routeIs('category.*', 'sub_category.*', 'brand.*', 'type.*', 'discount.*', 'product.*', 'combo.*', 'store.*', 'store_gallery.*', 'attribute.*', 'attribute_value.*', 'offer.*', 'tax.*') ? 'show' : '' }}" id="sidebarCatalog">
                         <div class="side-submenu">
                             <a class="nav-link {{ request()->routeIs('category.*') ? 'active' : '' }}" href="{{ route('category.index') }}"><i class="fas fa-list"></i>Category</a>
                             <a class="nav-link {{ request()->routeIs('sub_category.*') ? 'active' : '' }}" href="{{ route('sub_category.index') }}"><i class="fas fa-list-ul"></i>Sub Category</a>
@@ -1821,6 +1821,7 @@
                             <a class="nav-link {{ request()->routeIs('product.barcode', 'product.barcode_print') ? 'active' : '' }}" href="{{ route('product.barcode') }}"><i class="fas fa-barcode"></i>Product Barcodes</a>
                             <a class="nav-link {{ request()->routeIs('combo.*') ? 'active' : '' }}" href="{{ route('combo.index') }}"><i class="fas fa-boxes-packing"></i>Combo Products</a>
                             <a class="nav-link {{ request()->routeIs('store.*') ? 'active' : '' }}" href="{{ route('store.index') }}"><i class="fas fa-store"></i>Stores</a>
+                            <a class="nav-link {{ request()->routeIs('store_gallery.*') ? 'active' : '' }}" href="{{ route('store_gallery.index') }}"><i class="fas fa-images"></i>Store Gallery</a>
                             <a class="nav-link {{ request()->routeIs('discount.*') ? 'active' : '' }}" href="{{ route('discount.index') }}"><i class="fas fa-percent"></i>Discounts</a>
                             <a class="nav-link {{ request()->routeIs('offer.*') ? 'active' : '' }}" href="{{ route('offer.index') }}"><i class="fas fa-tags"></i>Offers</a>
                             <a class="nav-link {{ request()->routeIs('tax.*') ? 'active' : '' }}" href="{{ route('tax.index') }}"><i class="fas fa-receipt"></i>Taxes</a>

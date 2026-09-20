@@ -13,10 +13,19 @@ class CustomerOrder extends Model
         'customer_mobile',
         'customer_email',
         'payment_status',
+        'payment_gateway',
+        'payu_txnid',
+        'payu_payment_id',
+        'payment_method',
+        'payu_response',
         'fulfillment_type',
         'status',
         'subtotal',
         'grand_total',
+    ];
+
+    protected $casts = [
+        'payu_response' => 'array',
     ];
 
     public function store()

@@ -99,10 +99,14 @@ class CustomerOrderController extends Controller
             return redirect()->route('customer-order.select-store');
         }
 
+        if (!$this->payuIsConfigured()) {
+            return back()->withInput()->with('error', 'Online payment is not configured yet. Please contact the store.');
+        }
+
         $validated = $request->validate([
             'customer_name' => ['required', 'string', 'max:100'],
-            'customer_mobile' => ['nullable', 'string', 'max:20'],
-            'customer_email' => ['nullable', 'email:rfc,dns', 'max:191'],
+            'customer_mobile' => ['required', 'string', 'max:20'],
+            'customer_email' => ['required', 'email:rfc,dns', 'max:191'],
             'fulfillment_type' => ['required', 'in:packing,dine_in'],
             'cart' => ['required', 'array', 'min:1'],
             'cart.*.id' => ['required', 'integer'],
@@ -149,6 +153,7 @@ class CustomerOrderController extends Controller
                     'customer_email' => $validated['customer_email'] ?? null,
                     'status' => 'pending',
                     'payment_status' => 'pending',
+                    'payment_gateway' => 'payu',
                     'fulfillment_type' => $validated['fulfillment_type'],
                     'subtotal' => $subtotal,
                     'grand_total' => $subtotal,
@@ -167,6 +172,11 @@ class CustomerOrderController extends Controller
                     $stockRows->get($item['id'])->decrement('qty', $item['qty']);
                 }
 
+                $order->update([
+                    // PayU txnid must be unique, short, and must not contain spaces.
+                    'payu_txnid' => 'CO' . now()->format('ymdHis') . $order->id,
+                ]);
+
                 return $order;
             });
         } catch (\Throwable $exception) {
@@ -176,18 +186,81 @@ class CustomerOrderController extends Controller
                 : 'Your order could not be placed. Please try again.');
         }
 
-        if ($order->customer_email) {
+        $request->session()->put('customer_order_id', $order->id);
+        return view('customer-order.payu-redirect', [
+            'paymentUrl' => rtrim(config('services.payu.base_url'), '/') . '/_payment',
+            'payload' => $this->payuRequestPayload($order),
+        ]);
+    }
+
+    public function payuCallback(Request $request)
+    {
+        $response = $request->all();
+        $order = CustomerOrder::query()->where('payu_txnid', $request->input('txnid'))->firstOrFail();
+        $isValid = $this->isValidPayuResponse($response)
+            && hash_equals(number_format((float) $order->grand_total, 2, '.', ''), number_format((float) $request->input('amount'), 2, '.', ''))
+            && hash_equals((string) $order->id, (string) $request->input('udf1'));
+        $isSuccessful = $isValid && strtolower((string) $request->input('status')) === 'success';
+        $sendEmail = false;
+
+        DB::transaction(function () use ($order, $response, $isValid, $isSuccessful, &$sendEmail) {
+            $order = CustomerOrder::query()->with('items')->lockForUpdate()->findOrFail($order->id);
+
+            // Never change stock or payment state for a forged callback.
+            if (!$isValid) {
+                return;
+            }
+
+            if ((string) $order->payment_status === 'completed') {
+                return;
+            }
+
+            $paymentData = [
+                'payu_payment_id' => $response['mihpayid'] ?? null,
+                'payment_method' => $response['mode'] ?? null,
+                'payu_response' => $response,
+            ];
+
+            if ($isSuccessful) {
+                $order->update($paymentData + ['payment_status' => 'completed']);
+                $sendEmail = true;
+                return;
+            }
+
+            // A verified failed payment must not leave stock reserved.
+            if ((string) $order->payment_status === 'pending') {
+                foreach ($order->items as $item) {
+                    $stock = StoreProduct::query()
+                        ->where('store_id', $order->store_id)
+                        ->where('product_id', $item->product_id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($stock) {
+                        $stock->increment('qty', $item->quantity);
+                    }
+                }
+                $order->update($paymentData + [
+                    'payment_status' => 'failed',
+                    'status' => 'cancelled',
+                ]);
+            }
+        });
+
+        $order->refresh();
+
+        $request->session()->put('customer_order_store_id', $order->store_id);
+        $request->session()->put('customer_order_id', $order->id);
+
+        if ($sendEmail && $order->customer_email) {
             try {
                 $order->load('store', 'items');
                 Mail::to($order->customer_email)->send(new CustomerOrderConfirmation($order));
                 $request->session()->flash('order_email_sent', $order->customer_email);
             } catch (\Throwable $exception) {
-                // An email delivery error must not undo a successfully saved order.
                 report($exception);
             }
         }
 
-        $request->session()->put('customer_order_id', $order->id);
         return redirect()->route('customer-order.success', $order);
     }
 
@@ -237,5 +310,60 @@ class CustomerOrderController extends Controller
             && (int) $request->session()->get('customer_order_id') === (int) $order->id,
             404
         );
+    }
+
+    private function payuIsConfigured(): bool
+    {
+        $key = (string) config('services.payu.key');
+        $salt = (string) config('services.payu.salt');
+        return $key !== '' && $salt !== '' && !str_starts_with($key, 'your_') && !str_starts_with($salt, 'your_');
+    }
+
+    private function payuRequestPayload(CustomerOrder $order): array
+    {
+        $key = (string) config('services.payu.key');
+        $amount = number_format((float) $order->grand_total, 2, '.', '');
+        $firstname = str_replace('|', ' ', trim($order->customer_name));
+        $email = str_replace('|', ' ', trim($order->customer_email));
+        $productInfo = 'Order ' . $order->order_number;
+        $udf1 = (string) $order->id;
+        $hashString = implode('|', [
+            $key, $order->payu_txnid, $amount, $productInfo, $firstname, $email,
+            // udf2-udf5, followed by the five empty fields in PayU's
+            // `udf5||||||SALT` sequence.
+            $udf1, '', '', '', '', '', '', '', '', '', config('services.payu.salt'),
+        ]);
+
+        return [
+            'key' => $key,
+            'txnid' => $order->payu_txnid,
+            'amount' => $amount,
+            'productinfo' => $productInfo,
+            'firstname' => $firstname,
+            'email' => $email,
+            'phone' => $order->customer_mobile,
+            'surl' => route('customer-order.payu.callback'),
+            'furl' => route('customer-order.payu.callback'),
+            'udf1' => $udf1,
+            'udf2' => '', 'udf3' => '', 'udf4' => '', 'udf5' => '',
+            'hash' => hash('sha512', $hashString),
+        ];
+    }
+
+    private function isValidPayuResponse(array $response): bool
+    {
+        if (!$this->payuIsConfigured() || empty($response['hash'])) {
+            return false;
+        }
+
+        $prefix = !empty($response['additionalCharges'])
+            ? $response['additionalCharges'] . '|' : '';
+        $reverseHash = $prefix . config('services.payu.salt') . '|' . ($response['status'] ?? '') . '||||||'
+            . ($response['udf5'] ?? '') . '|' . ($response['udf4'] ?? '') . '|' . ($response['udf3'] ?? '') . '|'
+            . ($response['udf2'] ?? '') . '|' . ($response['udf1'] ?? '') . '|' . ($response['email'] ?? '') . '|'
+            . ($response['firstname'] ?? '') . '|' . ($response['productinfo'] ?? '') . '|'
+            . ($response['amount'] ?? '') . '|' . ($response['txnid'] ?? '') . '|' . ($response['key'] ?? '');
+
+        return hash_equals(hash('sha512', $reverseHash), (string) $response['hash']);
     }
 }

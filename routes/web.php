@@ -10,6 +10,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\StoreGalleryController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\DistrictController;
@@ -80,6 +81,7 @@ Route::prefix('self-order')->controller(CustomerOrderController::class)->name('c
     Route::get('/menu', 'menu')->name('menu');
     Route::get('/products', 'products')->name('products');
     Route::post('/place', 'place')->name('place');
+    Route::post('/payu/callback', 'payuCallback')->name('payu.callback');
     Route::get('/success/{order}', 'success')->name('success');
     Route::get('/receipt/{order}', 'receipt')->name('receipt');
     Route::get('/receipt/{order}/download', 'downloadReceipt')->name('receipt.download');
@@ -232,6 +234,14 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('save', 'save')->name('save');
         Route::get('edit/{id}', 'edit')->name('edit');
         Route::post('update', 'update')->name('update');
+    });
+
+    Route::prefix('store-gallery')->controller(StoreGalleryController::class)->name('store_gallery.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('add', 'create')->name('create');
+        Route::post('', 'store')->name('store');
+        Route::get('{gallery}/edit', 'edit')->name('edit');
+        Route::put('{gallery}', 'update')->name('update');
     });
 
     Route::prefix('country')->controller(CountryController::class)->name('country.')->group(function () {
