@@ -166,7 +166,7 @@
                         >
 
                             {{-- Dynamic Products --}}
-                            <div id="productList" class="grid grid-cols-3 gap-3 p-3"></div>
+                            <div id="productList" class="grid grid-cols-2 md:grid-cols-3 gap-3 p-3"></div>
 
                             <div id="productLoadMore" class="hidden px-3 py-4 text-center text-xs text-slate-400">
                                 <i class="fas fa-spinner fa-spin mr-1"></i> Loading more products...
