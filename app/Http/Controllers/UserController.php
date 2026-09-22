@@ -25,7 +25,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = $this->user->paginate(config('constants.pagination_limit'));
+        $users = $this->user->orderBy('id', 'desc')->paginate(config('constants.pagination_limit'));
         return view('wholesale.index', compact('users'));
     }
 

@@ -37,12 +37,14 @@ class ProcessWalletPoints extends Command
 
             if ($user) {
 
-                $user->wallet_points += $item->points;
+                // 100 points = Rs. 1
+                $walletAmount = round($item->points / 100, 2);
+                $user->wallet_points += $walletAmount;
                 $user->save();
 
                 $item->is_processed = 1;
                 $item->type = 'debit';
-                $item->description = 'Processed & added to wallet';
+                $item->description = "Processed & added Rs. {$walletAmount} to wallet";
                 $item->save();
 
                 \Log::info('Processed wallet ID: ' . $item->id);

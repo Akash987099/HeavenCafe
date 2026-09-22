@@ -69,7 +69,7 @@ class AuthController extends Controller
             'email'        => $request->email,
             'phone'        => $request->phone,
             'email_verify' => 1,
-            'wallet_points' => 50,
+            'wallet_points' => 10,
             'password'     => Hash::make($request->password),
         ]);
 
@@ -86,7 +86,7 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'title' => 'Welcome to Cafe Loyalty Program',
             'link' => null,
-            'description' => 'You have received 50 welcome points. Start earning more rewards with us!',
+            'description' => 'You have received 10 welcome points. Start earning more rewards with us!',
             'is_read' => 0,
         ]);
 
