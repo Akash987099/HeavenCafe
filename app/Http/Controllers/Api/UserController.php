@@ -39,7 +39,7 @@ class UserController extends Controller
     /**
      * Convert loyalty points into wallet balance.
      *
-     * The current conversion rate is intentionally fixed at 1 point = Rs. 1.
+     * The current conversion rate is fixed at 100 points = Rs. 1.
      */
     public function redeemWallet(Request $request)
     {
@@ -56,7 +56,7 @@ class UserController extends Controller
         }
 
         $pointsToRedeem = (float) $request->points;
-        $pointValue = 1; // 1 loyalty point = Rs. 1
+        $pointValue = 0.01; // 100 loyalty points = Rs. 1
 
         return DB::transaction(function () use ($pointsToRedeem, $pointValue) {
             // Lock the user row so concurrent redeem requests cannot credit twice.
@@ -81,7 +81,7 @@ class UserController extends Controller
                 ], 422);
             }
 
-            $redeemedAmount = $pointsToRedeem * $pointValue;
+            $redeemedAmount = round($pointsToRedeem * $pointValue, 2);
 
             Wallet::create([
                 'user_id' => $user->id,
