@@ -69,7 +69,7 @@ class AuthController extends Controller
             'email'        => $request->email,
             'phone'        => $request->phone,
             'email_verify' => 1,
-            'wallet_points' => 10,
+            'wallet_points' => 0,
             'password'     => Hash::make($request->password),
         ]);
 
@@ -82,13 +82,13 @@ class AuthController extends Controller
         //     'expiry_date' => Carbon::now()->addDays(28),
         // ]);
 
-        $this->notification->create([
-            'user_id' => $user->id,
-            'title' => 'Welcome to Cafe Loyalty Program',
-            'link' => null,
-            'description' => 'You have received 10 welcome points. Start earning more rewards with us!',
-            'is_read' => 0,
-        ]);
+        // $this->notification->create([
+        //     'user_id' => $user->id,
+        //     'title' => 'Welcome to Cafe Loyalty Program',
+        //     'link' => null,
+        //     'description' => 'You have received 10 welcome points. Start earning more rewards with us!',
+        //     'is_read' => 0,
+        // ]);
 
         return response()->json([
             'status' => true,

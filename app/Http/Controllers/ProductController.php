@@ -293,7 +293,7 @@ class ProductController extends Controller
         $save = $product->save();
 
         if ($save) {
-            return redirect()->back()->with('success', 'Successfully!');
+            return redirect()->route('product.index')->with('success', 'Successfully!');
         }
         return redirect()->back()->with('error', 'Failed!');
     }
@@ -379,7 +379,7 @@ class ProductController extends Controller
         }
 
         if ($product->save()) {
-            return redirect()->back()->with('success', 'Updated successfully!');
+            return redirect()->route('product.index')->with('success', 'Updated successfully!');
         }
 
         return redirect()->back()->with('error', 'Update failed!');

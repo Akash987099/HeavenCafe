@@ -6,7 +6,7 @@
         <div class="col-12">
             <div class="card mb-4">
                 <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0">Add</h6>
+                    <h6 class="m-0">Edit Product</h6>
                 </div>
 
                 <div class="card-body px-4 pt-4 pb-2">
@@ -247,7 +247,7 @@
                         </div>
 
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
                         </div>
                     </form>
                 </div>
