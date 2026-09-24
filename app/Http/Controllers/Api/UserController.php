@@ -69,9 +69,12 @@ class UserController extends Controller
                 ], 401);
             }
 
+            // Processed credits have already been converted into wallet money, so they
+            // are no longer redeemable loyalty points.
             $availablePoints = (float) Wallet::where('user_id', $user->id)
-                ->selectRaw("COALESCE(SUM(CASE WHEN type = 'credit' THEN points WHEN type = 'debit' THEN -points ELSE 0 END), 0) as balance")
+                ->selectRaw("COALESCE(SUM(CASE WHEN type = 'credit' AND is_processed = 0 THEN points WHEN type = 'debit' AND description LIKE 'Redeemed %' THEN -points ELSE 0 END), 0) as balance")
                 ->value('balance');
+            $availablePoints = max(0, $availablePoints);
 
             if ($pointsToRedeem > $availablePoints) {
                 return response()->json([
@@ -87,6 +90,9 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'type' => 'debit',
                 'points' => $pointsToRedeem,
+                // This amount is credited immediately, so the scheduled processor
+                // must not process it again.
+                'is_processed' => 1,
                 'description' => "Redeemed {$pointsToRedeem} loyalty points to wallet (Rs. {$redeemedAmount})",
             ]);
 
@@ -178,10 +184,12 @@ class UserController extends Controller
             //     continue;
             // }
 
-            if ($point->type == 'credit') {
+            // A processed entry has already been converted to the user's wallet
+            // balance and must not be counted as redeemable loyalty points.
+            if ($point->type == 'credit' && $point->is_processed == 0) {
                 $availablePoints += $point->points;
             }
-            elseif ($point->type == 'debit') {
+            elseif ($point->type == 'debit' && strpos($point->description ?? '', 'Redeemed ') === 0) {
                 $availablePoints -= $point->points;
             }
 
@@ -191,7 +199,7 @@ class UserController extends Controller
 
         return response()->json([
             'status' => true,
-            'available_points' => $availablePoints,
+            'available_points' => max(0, $availablePoints),
             'points' => $walletPoints,
         ], 200);
     }
