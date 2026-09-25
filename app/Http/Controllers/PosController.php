@@ -101,7 +101,7 @@ class PosController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
-        $selectedFrom = $filters['from'] ?? now()->subDays(6)->toDateString();
+        $selectedFrom = $filters['from'] ?? today()->toDateString();
         $selectedTo = $filters['to'] ?? today()->toDateString();
         $reportStart = \Illuminate\Support\Carbon::parse($selectedFrom)->startOfDay();
         $reportEnd = \Illuminate\Support\Carbon::parse($selectedTo)->endOfDay();
