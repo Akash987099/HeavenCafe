@@ -53,17 +53,16 @@
                 @if ($tasks->isNotEmpty())
                     <div class="grid grid-cols-2 gap-3 p-4 lg:grid-cols-3">
                         @foreach ($tasks as $task)
-                            <article class="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                <a href="{{ $task->task_image ? asset($task->task_image) : '#' }}" {{ $task->task_image ? 'target=_blank' : '' }} class="block bg-slate-100">
+                            <article class="overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
+                                <a href="{{ $task->task_image ? asset($task->task_image) : '#' }}" {{ $task->task_image ? 'target=_blank' : '' }} class="block">
                                     @if ($task->task_image)
-                                        <img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}" class="h-32 w-full object-cover sm:h-44"
-                                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                                        <div class="hidden flex h-32 items-center justify-center text-slate-400 sm:h-44"><i class="fas fa-image text-2xl"></i></div>
+                                        <img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}" class="h-36 w-full rounded-lg bg-slate-100 object-cover"
+                                            onerror="this.onerror=null;this.src='{{ asset('images/no-product.png') }}';">
                                     @else
-                                        <div class="flex h-32 items-center justify-center text-slate-400 sm:h-44"><i class="fas fa-image text-2xl"></i></div>
+                                        <div class="flex h-36 items-center justify-center rounded-lg bg-slate-100 text-slate-400"><i class="fas fa-image text-2xl"></i></div>
                                     @endif
                                 </a>
-                                <div class="p-3">
+                                <div class="mt-3">
                                     <h3 class="truncate text-sm font-semibold text-slate-800">{{ $task->title }}</h3>
                                     @if ($task->description)<p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ $task->description }}</p>@endif
                                     <form action="{{ route('pos.staff.tasks.destroy', $task->id) }}" method="POST" class="mt-3">
