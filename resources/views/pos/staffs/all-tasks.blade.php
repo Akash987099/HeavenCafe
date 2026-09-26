@@ -39,18 +39,40 @@
                             <p class="mt-0.5 text-xs text-slate-400">{{ $employee?->staff_id ?: '-' }} &middot; {{ $staffTasks->count() }} task(s)</p>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500"><tr><th class="px-5 py-3">Image</th><th class="px-5 py-3">Task</th></tr></thead>
-                            <tbody class="divide-y divide-slate-100">
-                                @foreach ($staffTasks as $task)
-                                    <tr class="hover:bg-slate-50">
-                                        <td class="px-5 py-4">@if ($task->task_image)<a href="{{ asset($task->task_image) }}" target="_blank"><img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}" class="h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200"></a>@else <span class="text-slate-400">-</span> @endif</td>
-                                        <td class="px-5 py-4"><p class="font-semibold text-slate-700">{{ $task->title }}</p>@if ($task->description)<p class="mt-1 max-w-xl text-xs text-slate-500">{{ $task->description }}</p>@endif</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div class="grid grid-cols-2 gap-3 p-4 lg:grid-cols-3">
+                        @foreach ($staffTasks as $task)
+                            <article class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                <a href="{{ $task->task_image ? asset($task->task_image) : '#' }}" {{ $task->task_image ? 'target=_blank' : '' }} class="block bg-slate-100">
+                                    @if ($task->task_image)
+                                        <img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}"
+                                            class="h-32 w-full object-cover sm:h-44"
+                                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                                        <div class="hidden flex h-32 items-center justify-center text-slate-400 sm:h-44">
+                                            <i class="fas fa-image text-2xl"></i>
+                                        </div>
+                                    @else
+                                        <div class="flex h-32 items-center justify-center text-slate-400 sm:h-44">
+                                            <i class="fas fa-image text-2xl"></i>
+                                        </div>
+                                    @endif
+                                </a>
+                                <div class="p-3">
+                                    <h3 class="truncate text-sm font-semibold text-slate-800">{{ $task->title }}</h3>
+                                    @if ($task->description)
+                                        <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ $task->description }}</p>
+                                    @endif
+                                    @if (! $isOwnTasks)
+                                        <form action="{{ route('pos.staff.tasks.destroy', $task->id) }}" method="POST" class="mt-3">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('Delete this task?');" class="text-xs font-semibold text-rose-600 hover:text-rose-700">
+                                                <i class="fas fa-trash-alt mr-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
                     </div>
                 </section>
             @empty

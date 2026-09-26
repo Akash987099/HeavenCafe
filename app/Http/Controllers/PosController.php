@@ -1384,6 +1384,27 @@ class PosController extends Controller
             ->with('success', 'Task assigned successfully.');
     }
 
+    public function staffTaskDestroy($id)
+    {
+        $user = Auth::guard('pos')->user();
+        abort_unless($user->role == 1, 403);
+
+        $task = StaffTask::query()
+            ->where('user_id', $user->id)
+            ->findOrFail($id);
+
+        if ($task->task_image && str_starts_with($task->task_image, 'employees/')) {
+            $imagePath = public_path($task->task_image);
+            if (File::exists($imagePath)) {
+                File::delete($imagePath);
+            }
+        }
+
+        $task->delete();
+
+        return redirect()->back()->with('success', 'Task deleted successfully.');
+    }
+
     public function staffOfferLetter($id)
     {
         $pos = Pos::with('store')

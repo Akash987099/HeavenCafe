@@ -34,6 +34,7 @@ Route::middleware(['auth:pos'])->group(function () {
         // Staffs
         Route::get('/staffs', 'staff')->name('staff');
         Route::get('/staff-tasks/print', 'allStaffTasksPrint')->name('staff.tasks.print');
+        Route::delete('/staff-tasks/{id}', 'staffTaskDestroy')->name('staff.tasks.destroy');
         Route::get('/staff-tasks', 'allStaffTasks')->name('staff.tasks.index');
         Route::get('/staff/add', 'staffAdd')->name('staff.add');
         Route::post('/staff/save', 'staffSave')->name('staff.save');
