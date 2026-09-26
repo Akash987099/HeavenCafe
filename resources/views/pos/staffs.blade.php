@@ -189,6 +189,11 @@
                                             title="Salary Advances">
                                             <i class="fas fa-hand-holding-usd"></i>
                                         </a>
+                                        <a href="{{ route('pos.staff.salary', $pos->id) }}"
+                                            class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white transition"
+                                            title="Monthly Salary">
+                                            <i class="fas fa-wallet"></i>
+                                        </a>
                                         <a href="{{ route('pos.staff.offer-letter', $pos->id) }}" target="_blank"
                                             class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-[#128C7E] hover:text-white transition"
                                             title="Offer Letter">

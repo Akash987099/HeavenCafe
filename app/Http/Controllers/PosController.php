@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\PosOrder;
 use App\Models\Pos;
 use App\Models\StaffSalaryAdvance;
+use App\Models\Leave;
 use App\Models\Role;
 use App\Models\PosOrderDetail;
 use App\Models\Policy;
@@ -21,6 +22,7 @@ use App\Models\Setting;
 use App\Models\Category;
 use App\Models\CustomerOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class PosController extends Controller
 {
@@ -1213,6 +1215,77 @@ class PosController extends Controller
 
         return redirect()->route('pos.staff.advances', $staff->id)
             ->with('success', 'Salary advance added successfully.');
+    }
+
+    public function staffSalary(Request $request, $id)
+    {
+        $request->validate([
+            'month' => 'nullable|date_format:Y-m',
+        ]);
+
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+
+        $selectedMonth = $request->query('month', now()->format('Y-m'));
+        $monthStart = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        $isMonthClosed = $monthEnd->lte(now()->endOfDay());
+
+        $approvedLeaves = Leave::query()
+            ->where('pos_user_id', $staff->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $monthEnd->toDateString())
+            ->whereDate('end_date', '>=', $monthStart->toDateString())
+            ->orderBy('start_date')
+            ->get()
+            ->map(function ($leave) use ($monthStart, $monthEnd) {
+                $leaveStart = Carbon::parse($leave->start_date)->startOfDay();
+                $leaveEnd = Carbon::parse($leave->end_date)->startOfDay();
+                $overlapStart = $leaveStart->lt($monthStart) ? $monthStart->copy() : $leaveStart;
+                $overlapEnd = $leaveEnd->gt($monthEnd) ? $monthEnd->copy() : $leaveEnd;
+
+                $leave->days_in_month = $overlapStart->diffInDays($overlapEnd) + 1;
+
+                return $leave;
+            });
+
+        $unpaidLeaveDays = $approvedLeaves
+            ->where('leave_type', 'Unpaid Leave')
+            ->sum('days_in_month');
+        $paidLeaveDays = $approvedLeaves
+            ->where('leave_type', '!=', 'Unpaid Leave')
+            ->sum('days_in_month');
+
+        $monthAdvances = StaffSalaryAdvance::query()
+            ->where('staff_id', $staff->id)
+            ->where('user_id', Auth::guard('pos')->id())
+            ->whereBetween('advance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->latest('advance_date')
+            ->latest('id')
+            ->get();
+
+        $monthlySalary = (float) ($staff->salary ?? 0);
+        $dailySalary = $monthlySalary / $monthStart->daysInMonth;
+        $leaveDeduction = min($monthlySalary, $dailySalary * $unpaidLeaveDays);
+        $advanceTotal = (float) $monthAdvances->sum('amount');
+        $finalSalary = max(0, $monthlySalary - $leaveDeduction - $advanceTotal);
+
+        return view('pos.staffs.salary', compact(
+            'staff',
+            'selectedMonth',
+            'monthStart',
+            'isMonthClosed',
+            'monthlySalary',
+            'dailySalary',
+            'approvedLeaves',
+            'paidLeaveDays',
+            'unpaidLeaveDays',
+            'leaveDeduction',
+            'monthAdvances',
+            'advanceTotal',
+            'finalSalary'
+        ));
     }
 
     public function staffOfferLetter($id)
