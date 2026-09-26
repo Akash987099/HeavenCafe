@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\PosOrder;
 use App\Models\Pos;
+use App\Models\StaffSalaryAdvance;
 use App\Models\Role;
 use App\Models\PosOrderDetail;
 use App\Models\Policy;
@@ -1009,6 +1010,7 @@ class PosController extends Controller
             'bank_name' => 'nullable|string|max:255',
             'bank_account_number' => 'nullable|string|max:100',
             'bank_ifsc_code' => 'nullable|string|max:50',
+            'staff_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'documents' => 'nullable|array|max:10',
             'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
@@ -1039,13 +1041,21 @@ class PosController extends Controller
         if ($save) {
             $employeeDirectory = public_path('employees/' . $pos->staff_id);
             File::ensureDirectoryExists($employeeDirectory);
+
+            if ($request->hasFile('staff_image')) {
+                $image = $request->file('staff_image');
+                $filename = uniqid('profile_', true) . '.' . $image->extension();
+                $image->move($employeeDirectory, $filename);
+                $pos->staff_image = 'employees/' . $pos->staff_id . '/' . $filename;
+            }
+
             $documents = [];
             foreach ($request->file('documents', []) as $document) {
                 $filename = uniqid('document_', true) . '.' . $document->extension();
                 $document->move($employeeDirectory, $filename);
                 $documents[] = 'employees/' . $pos->staff_id . '/' . $filename;
             }
-            if ($documents) {
+            if ($documents || $pos->isDirty('staff_image')) {
                 $pos->documents = $documents;
                 $pos->save();
             }
@@ -1100,6 +1110,7 @@ class PosController extends Controller
             'bank_name' => 'nullable|string|max:255',
             'bank_account_number' => 'nullable|string|max:100',
             'bank_ifsc_code' => 'nullable|string|max:50',
+            'staff_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'documents' => 'nullable|array|max:10',
             'documents.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
@@ -1139,7 +1150,69 @@ class PosController extends Controller
             $staff->save();
         }
 
+        if ($request->hasFile('staff_image')) {
+            $employeeDirectory = public_path('employees/' . $staff->staff_id);
+            File::ensureDirectoryExists($employeeDirectory);
+
+            $image = $request->file('staff_image');
+            $filename = uniqid('profile_', true) . '.' . $image->extension();
+            $image->move($employeeDirectory, $filename);
+
+            if ($staff->staff_image && File::exists(public_path($staff->staff_image))) {
+                File::delete(public_path($staff->staff_image));
+            }
+
+            $staff->staff_image = 'employees/' . $staff->staff_id . '/' . $filename;
+            $staff->save();
+        }
+
         return redirect()->route('pos.staff')->with('success', 'Staff updated successfully.');
+    }
+
+    public function staffAdvances($id)
+    {
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+
+        $advances = StaffSalaryAdvance::query()
+            ->where('staff_id', $staff->id)
+            ->where('user_id', Auth::guard('pos')->id())
+            ->latest('advance_date')
+            ->latest('id')
+            ->paginate(15);
+
+        $currentMonthAdvance = StaffSalaryAdvance::query()
+            ->where('staff_id', $staff->id)
+            ->where('user_id', Auth::guard('pos')->id())
+            ->whereBetween('advance_date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
+            ->sum('amount');
+
+        return view('pos.staffs.advances', compact('staff', 'advances', 'currentMonthAdvance'));
+    }
+
+    public function staffAdvanceStore(Request $request, $id)
+    {
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|gt:0|max:9999999999.99',
+            'advance_date' => 'required|date',
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        StaffSalaryAdvance::create([
+            'staff_id' => $staff->id,
+            'user_id' => Auth::guard('pos')->id(),
+            'amount' => $validated['amount'],
+            'advance_date' => $validated['advance_date'],
+            'note' => $validated['note'] ?? null,
+        ]);
+
+        return redirect()->route('pos.staff.advances', $staff->id)
+            ->with('success', 'Salary advance added successfully.');
     }
 
     public function staffOfferLetter($id)

@@ -3,7 +3,7 @@
 @section('content')
     <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6">
 
-        <div class="max-w-7xl mx-auto">
+        <div class="mx-auto">
 
             {{-- Header --}}
             <div class="mb-6">
@@ -183,6 +183,11 @@
                                             class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-[#128C7E] hover:text-white transition"
                                             title="Edit Staff">
                                             <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="{{ route('pos.staff.advances', $pos->id) }}"
+                                            class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-emerald-50 text-[#128C7E] hover:bg-[#128C7E] hover:text-white transition"
+                                            title="Salary Advances">
+                                            <i class="fas fa-hand-holding-usd"></i>
                                         </a>
                                         <a href="{{ route('pos.staff.offer-letter', $pos->id) }}" target="_blank"
                                             class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-[#128C7E] hover:text-white transition"

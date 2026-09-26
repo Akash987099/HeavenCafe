@@ -14,7 +14,7 @@ class Pos extends Authenticatable
         'id', 'name', 'email', 'mobile', 'role', 'user_id', 'password', 'store_id',
         'date_of_joining', 'date_of_birth', 'gender', 'designation', 'salary', 'address',
         'emergency_contact_name', 'emergency_contact_mobile', 'bank_name',
-        'bank_account_number', 'bank_ifsc_code', 'documents', 'created_at', 'updated_at',
+        'bank_account_number', 'bank_ifsc_code', 'staff_image', 'documents', 'created_at', 'updated_at',
     ];
 
     protected $casts = [
