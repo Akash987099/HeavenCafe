@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
 use App\Models\Customer;
+use App\Models\Pos;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -87,13 +89,25 @@ class LoginController extends Controller
     }
 
     public function loginsPos(Request $request){
-        $credentials = $request->only('email', 'password');
-        // dd($credentials);
-        
-        if (Auth::guard('pos')->attempt($credentials)) {
+        $credentials = $request->validate([
+            'login' => 'required|string|max:255',
+            'password' => 'required|string',
+        ]);
+
+        $login = trim($credentials['login']);
+        $staff = Pos::query()
+            ->where('email', $login)
+            ->orWhere('mobile', $login)
+            ->orWhere('staff_id', $login)
+            ->first();
+
+        if ($staff && Hash::check($credentials['password'], $staff->password)) {
+            Auth::guard('pos')->login($staff);
+            $request->session()->regenerate();
+
             return response()->json(['status' => 'success']);
         }
-        return response()->json(['status' => 'error', 'message' => 'Invalid username or password.']);
+        return response()->json(['status' => 'error', 'message' => 'Invalid login details or password.'], 422);
     }
 
     public function logout(Request $request)

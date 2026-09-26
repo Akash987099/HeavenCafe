@@ -77,12 +77,12 @@
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700 mt-1">POS Staff Login</p>
         </div>
 
-        <!-- Email / Password form (optional, but still clean) -->
+        <!-- Staff ID / mobile / email login -->
         <form class="space-y-4" id="loginForm" method="POST" action="{{ route('pos.logins') }}">
          @csrf
           <div>
-            <label class="block text-sm font-medium text-[#1E293B] mb-1">Email address</label>
-            <input type="email" name="email" id="email" placeholder="you@company.com" class="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-xl text-sm placeholder-gray-400 input-focus transition" />
+            <label class="block text-sm font-medium text-[#1E293B] mb-1">Staff ID, Mobile or Email</label>
+            <input type="text" name="login" id="login" required autocomplete="username" placeholder="Staff ID, mobile number or email" class="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-xl text-sm placeholder-gray-400 input-focus transition" />
           </div>
           <div>
             <label class="block text-sm font-medium text-[#1E293B] mb-1">Password</label>
