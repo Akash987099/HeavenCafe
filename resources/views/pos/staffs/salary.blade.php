@@ -9,6 +9,16 @@
                     <p class="mt-1 text-sm text-slate-400">{{ $staff->name }} &middot; {{ $staff->staff_id }} &middot; {{ $staff->designation ?: 'Staff' }}</p>
                 </div>
                 <div class="flex gap-3">
+                    @if ($isMonthClosed)
+                        <form action="{{ route('pos.staff.salary.send', $staff->id) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="month" value="{{ $selectedMonth }}">
+                            <button type="submit" onclick="return confirm('Send the final salary details to {{ $staff->email }}?');"
+                                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 text-sm font-semibold text-white hover:bg-sky-700">
+                                <i class="fas fa-envelope"></i> Send Salary Email
+                            </button>
+                        </form>
+                    @endif
                     <a href="{{ route('pos.staff.advances', $staff->id) }}"
                         class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#128C7E] px-5 text-sm font-semibold text-white hover:bg-[#0f766e]">
                         <i class="fas fa-hand-holding-usd"></i> Salary Advances
@@ -19,6 +29,13 @@
                     </a>
                 </div>
             </div>
+
+            @if (session('success'))
+                <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ session('success') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ session('error') }}</div>
+            @endif
 
             <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <form method="GET" class="flex flex-col gap-4 sm:flex-row sm:items-end">

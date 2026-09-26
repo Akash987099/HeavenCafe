@@ -8,6 +8,7 @@ use App\Models\PosOrder;
 use App\Models\Pos;
 use App\Models\StaffSalaryAdvance;
 use App\Models\StaffTask;
+use App\Mail\StaffSalaryConfirmation;
 use App\Models\Leave;
 use App\Models\Role;
 use App\Models\PosOrderDetail;
@@ -19,6 +20,7 @@ use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
 use App\Models\Category;
 use App\Models\CustomerOrder;
@@ -1298,6 +1300,83 @@ class PosController extends Controller
             'advanceTotal',
             'finalSalary'
         ));
+    }
+
+    public function staffSalarySend(Request $request, $id)
+    {
+        $request->validate([
+            'month' => 'required|date_format:Y-m',
+        ]);
+
+        $manager = Auth::guard('pos')->user();
+        abort_unless($manager->role == 1, 403);
+
+        $staff = Pos::query()
+            ->where('user_id', $manager->id)
+            ->findOrFail($id);
+
+        if (! $staff->email) {
+            return back()->with('error', 'This staff member does not have an email address.');
+        }
+
+        $monthStart = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        if ($monthEnd->gt(now()->endOfDay())) {
+            return back()->with('error', 'Salary email can only be sent after the month ends.');
+        }
+
+        $joiningDate = $staff->date_of_joining?->copy()->startOfDay();
+        $hasJoinedByMonthEnd = ! $joiningDate || $joiningDate->lte($monthEnd);
+        $payrollStart = $joiningDate && $joiningDate->gt($monthStart) ? $joiningDate->copy() : $monthStart->copy();
+        $payableDays = $hasJoinedByMonthEnd ? $payrollStart->diffInDays($monthEnd) + 1 : 0;
+
+        $unpaidLeaveDays = $hasJoinedByMonthEnd ? Leave::query()
+            ->where('pos_user_id', $staff->id)
+            ->where('status', 'approved')
+            ->where('leave_type', 'Unpaid Leave')
+            ->whereDate('start_date', '<=', $monthEnd->toDateString())
+            ->whereDate('end_date', '>=', $payrollStart->toDateString())
+            ->get()
+            ->sum(function ($leave) use ($payrollStart, $monthEnd) {
+                $start = Carbon::parse($leave->start_date)->startOfDay();
+                $end = Carbon::parse($leave->end_date)->startOfDay();
+                $overlapStart = $start->lt($payrollStart) ? $payrollStart->copy() : $start;
+                $overlapEnd = $end->gt($monthEnd) ? $monthEnd->copy() : $end;
+
+                return $overlapStart->diffInDays($overlapEnd) + 1;
+            }) : 0;
+
+        $monthlySalary = (float) ($staff->salary ?? 0);
+        $dailySalary = $monthlySalary / $monthStart->daysInMonth;
+        $grossSalary = $dailySalary * $payableDays;
+        $leaveDeduction = min($grossSalary, $dailySalary * $unpaidLeaveDays);
+        $advanceTotal = (float) StaffSalaryAdvance::query()
+            ->where('staff_id', $staff->id)
+            ->where('user_id', $manager->id)
+            ->whereBetween('advance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->sum('amount');
+        $finalSalary = max(0, $grossSalary - $leaveDeduction - $advanceTotal);
+
+        $salary = [
+            'month_name' => $monthStart->format('F Y'),
+            'monthly_salary' => $monthlySalary,
+            'payable_days' => $payableDays,
+            'gross_salary' => $grossSalary,
+            'unpaid_leave_days' => $unpaidLeaveDays,
+            'leave_deduction' => $leaveDeduction,
+            'advance_total' => $advanceTotal,
+            'final_salary' => $finalSalary,
+        ];
+
+        try {
+            Mail::to($staff->email)->send(new StaffSalaryConfirmation($staff, $salary));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'Salary email could not be sent. Please check mail settings and try again.');
+        }
+
+        return back()->with('success', 'Salary confirmation email sent to ' . $staff->email . '.');
     }
 
     public function staffTasks($id)

@@ -43,6 +43,7 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::get('/staff/{id}/advances', 'staffAdvances')->name('staff.advances');
         Route::post('/staff/{id}/advances', 'staffAdvanceStore')->name('staff.advances.store');
         Route::get('/staff/{id}/salary', 'staffSalary')->name('staff.salary');
+        Route::post('/staff/{id}/salary/send', 'staffSalarySend')->name('staff.salary.send');
         Route::get('/staff/{id}/tasks', 'staffTasks')->name('staff.tasks');
         Route::post('/staff/{id}/tasks', 'staffTaskStore')->name('staff.tasks.store');
         Route::get('/staff/{id}/offer-letter', 'staffOfferLetter')->name('staff.offer-letter');
