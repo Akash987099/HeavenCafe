@@ -11,7 +11,7 @@
     </style>
 
     <div class="print-area flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6">
-        <div class="mx-auto max-w-7xl">
+        <div class="mx-auto">
             <div class="no-print mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">{{ $isOwnTasks ? 'My Tasks' : 'All Staff Tasks' }}</h1>

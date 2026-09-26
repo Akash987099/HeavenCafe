@@ -5,7 +5,7 @@
 <div class="flex-1 overflow-y-auto p-4 md:p-6">
 
     <!-- Dashboard Header -->
-    <div class="max-w-7xl mx-auto">
+    <div class="mx-auto">
         <div class="mb-6">
             <h1 class="text-2xl md:text-3xl font-bold text-[#0F172A]">
                 Dashboard

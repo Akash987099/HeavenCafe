@@ -4,7 +4,7 @@
 
 <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6">
 
-    <div class="max-w-7xl mx-auto">
+    <div class="mx-auto">
 
         {{-- Dashboard Header --}}
         <div class="mb-6">
