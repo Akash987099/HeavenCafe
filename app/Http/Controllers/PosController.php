@@ -1317,29 +1317,37 @@ class PosController extends Controller
 
     public function allStaffTasks(Request $request)
     {
-        abort_unless(Auth::guard('pos')->user()->role == 1, 403);
+        $user = Auth::guard('pos')->user();
+        $isOwnTasks = $user->role != 1;
 
         $tasks = StaffTask::query()
             ->with('staff')
-            ->where('user_id', Auth::guard('pos')->id())
+            ->when($isOwnTasks,
+                fn ($query) => $query->where('staff_id', $user->id),
+                fn ($query) => $query->where('user_id', $user->id)
+            )
             ->latest('id')
             ->paginate(25)
             ->withQueryString();
 
-        return view('pos.staffs.all-tasks', compact('tasks'));
+        return view('pos.staffs.all-tasks', compact('tasks', 'isOwnTasks'));
     }
 
     public function allStaffTasksPrint(Request $request)
     {
-        abort_unless(Auth::guard('pos')->user()->role == 1, 403);
+        $user = Auth::guard('pos')->user();
+        $isOwnTasks = $user->role != 1;
 
         $tasks = StaffTask::query()
             ->with('staff')
-            ->where('user_id', Auth::guard('pos')->id())
+            ->when($isOwnTasks,
+                fn ($query) => $query->where('staff_id', $user->id),
+                fn ($query) => $query->where('user_id', $user->id)
+            )
             ->latest('id')
             ->get();
 
-        return view('pos.staffs.all-tasks-print', compact('tasks'));
+        return view('pos.staffs.all-tasks-print', compact('tasks', 'isOwnTasks'));
     }
 
     public function staffTaskStore(Request $request, $id)
