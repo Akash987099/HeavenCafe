@@ -39,13 +39,13 @@
                             <p class="mt-0.5 text-xs text-slate-400">{{ $employee?->staff_id ?: '-' }} &middot; {{ $staffTasks->count() }} task(s)</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 p-4 lg:grid-cols-3">
+                    <div class="grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
                         @foreach ($staffTasks as $task)
                             <article class="overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
                                 <a href="{{ $task->task_image ? asset($task->task_image) : '#' }}" {{ $task->task_image ? 'target=_blank' : '' }} class="block">
                                     @if ($task->task_image)
                                         <img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}"
-                                            class="h-36 w-full rounded-lg bg-slate-100 object-cover"
+                                            class="h-36 w-full rounded-lg bg-slate-100 object-contain"
                                             onerror="this.onerror=null;this.src='{{ asset('images/no-product.png') }}';">
                                     @else
                                         <div class="flex h-36 items-center justify-center rounded-lg bg-slate-100 text-slate-400">

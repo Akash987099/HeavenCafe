@@ -51,12 +51,12 @@
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4"><h2 class="font-bold text-slate-800">Task History</h2></div>
                 @if ($tasks->isNotEmpty())
-                    <div class="grid grid-cols-2 gap-3 p-4 lg:grid-cols-3">
+                    <div class="grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
                         @foreach ($tasks as $task)
                             <article class="overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
                                 <a href="{{ $task->task_image ? asset($task->task_image) : '#' }}" {{ $task->task_image ? 'target=_blank' : '' }} class="block">
                                     @if ($task->task_image)
-                                        <img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}" class="h-36 w-full rounded-lg bg-slate-100 object-cover"
+                                        <img src="{{ asset($task->task_image) }}" alt="{{ $task->title }}" class="h-36 w-full rounded-lg bg-slate-100 object-contain"
                                             onerror="this.onerror=null;this.src='{{ asset('images/no-product.png') }}';">
                                     @else
                                         <div class="flex h-36 items-center justify-center rounded-lg bg-slate-100 text-slate-400"><i class="fas fa-image text-2xl"></i></div>
