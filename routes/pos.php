@@ -33,6 +33,8 @@ Route::middleware(['auth:pos'])->group(function () {
 
         // Staffs
         Route::get('/staffs', 'staff')->name('staff');
+        Route::get('/staff-tasks/print', 'allStaffTasksPrint')->name('staff.tasks.print');
+        Route::get('/staff-tasks', 'allStaffTasks')->name('staff.tasks.index');
         Route::get('/staff/add', 'staffAdd')->name('staff.add');
         Route::post('/staff/save', 'staffSave')->name('staff.save');
         Route::get('/staff/{id}/edit', 'staffEdit')->name('staff.edit');
@@ -40,6 +42,8 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::get('/staff/{id}/advances', 'staffAdvances')->name('staff.advances');
         Route::post('/staff/{id}/advances', 'staffAdvanceStore')->name('staff.advances.store');
         Route::get('/staff/{id}/salary', 'staffSalary')->name('staff.salary');
+        Route::get('/staff/{id}/tasks', 'staffTasks')->name('staff.tasks');
+        Route::post('/staff/{id}/tasks', 'staffTaskStore')->name('staff.tasks.store');
         Route::get('/staff/{id}/offer-letter', 'staffOfferLetter')->name('staff.offer-letter');
         Route::get('/staff/{id}', 'staffView')->name('staff.view');
 

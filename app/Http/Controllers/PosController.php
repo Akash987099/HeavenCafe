@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\PosOrder;
 use App\Models\Pos;
 use App\Models\StaffSalaryAdvance;
+use App\Models\StaffTask;
 use App\Models\Leave;
 use App\Models\Role;
 use App\Models\PosOrderDetail;
@@ -1297,6 +1298,82 @@ class PosController extends Controller
             'advanceTotal',
             'finalSalary'
         ));
+    }
+
+    public function staffTasks($id)
+    {
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+
+        $tasks = StaffTask::query()
+            ->where('staff_id', $staff->id)
+            ->where('user_id', Auth::guard('pos')->id())
+            ->latest('id')
+            ->paginate(15);
+
+        return view('pos.staffs.tasks', compact('staff', 'tasks'));
+    }
+
+    public function allStaffTasks(Request $request)
+    {
+        abort_unless(Auth::guard('pos')->user()->role == 1, 403);
+
+        $tasks = StaffTask::query()
+            ->with('staff')
+            ->where('user_id', Auth::guard('pos')->id())
+            ->latest('id')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('pos.staffs.all-tasks', compact('tasks'));
+    }
+
+    public function allStaffTasksPrint(Request $request)
+    {
+        abort_unless(Auth::guard('pos')->user()->role == 1, 403);
+
+        $tasks = StaffTask::query()
+            ->with('staff')
+            ->where('user_id', Auth::guard('pos')->id())
+            ->latest('id')
+            ->get();
+
+        return view('pos.staffs.all-tasks-print', compact('tasks'));
+    }
+
+    public function staffTaskStore(Request $request, $id)
+    {
+        $staff = Pos::query()
+            ->where('user_id', Auth::guard('pos')->id())
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2000',
+            'task_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('task_image')) {
+            $taskDirectory = public_path('employees/' . $staff->staff_id . '/tasks');
+            File::ensureDirectoryExists($taskDirectory);
+            $image = $request->file('task_image');
+            $filename = uniqid('task_', true) . '.' . $image->extension();
+            $image->move($taskDirectory, $filename);
+            $imagePath = 'employees/' . $staff->staff_id . '/tasks/' . $filename;
+        }
+
+        StaffTask::create([
+            'staff_id' => $staff->id,
+            'user_id' => Auth::guard('pos')->id(),
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'task_image' => $imagePath,
+        ]);
+
+        return redirect()->route('pos.staff.tasks', $staff->id)
+            ->with('success', 'Task assigned successfully.');
     }
 
     public function staffOfferLetter($id)
