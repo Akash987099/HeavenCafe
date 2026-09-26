@@ -210,11 +210,6 @@
                 <i class="fas fa-utensils w-5 text-center"></i>
                 <span>Kitchen Orders</span>
             </a>
-            <a href="{{ route('pos.staff.tasks.index') }}"
-                class="sidebar-link {{ request()->routeIs('pos.staff.tasks.index') ? 'active' : '' }} flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
-                <i class="fas fa-tasks w-5 text-center"></i>
-                <span>My Tasks</span>
-            </a>
         @else
 
         <a href="{{ route('pos.index') }}"
