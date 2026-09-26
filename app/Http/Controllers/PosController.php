@@ -1231,24 +1231,30 @@ class PosController extends Controller
         $monthStart = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
         $monthEnd = $monthStart->copy()->endOfMonth();
         $isMonthClosed = $monthEnd->lte(now()->endOfDay());
+        $joiningDate = $staff->date_of_joining?->copy()->startOfDay();
+        $hasJoinedByMonthEnd = ! $joiningDate || $joiningDate->lte($monthEnd);
+        $payrollStart = $joiningDate && $joiningDate->gt($monthStart)
+            ? $joiningDate->copy()
+            : $monthStart->copy();
+        $payableDays = $hasJoinedByMonthEnd ? $payrollStart->diffInDays($monthEnd) + 1 : 0;
 
-        $approvedLeaves = Leave::query()
+        $approvedLeaves = $hasJoinedByMonthEnd ? Leave::query()
             ->where('pos_user_id', $staff->id)
             ->where('status', 'approved')
             ->whereDate('start_date', '<=', $monthEnd->toDateString())
-            ->whereDate('end_date', '>=', $monthStart->toDateString())
+            ->whereDate('end_date', '>=', $payrollStart->toDateString())
             ->orderBy('start_date')
             ->get()
-            ->map(function ($leave) use ($monthStart, $monthEnd) {
+            ->map(function ($leave) use ($payrollStart, $monthEnd) {
                 $leaveStart = Carbon::parse($leave->start_date)->startOfDay();
                 $leaveEnd = Carbon::parse($leave->end_date)->startOfDay();
-                $overlapStart = $leaveStart->lt($monthStart) ? $monthStart->copy() : $leaveStart;
+                $overlapStart = $leaveStart->lt($payrollStart) ? $payrollStart->copy() : $leaveStart;
                 $overlapEnd = $leaveEnd->gt($monthEnd) ? $monthEnd->copy() : $leaveEnd;
 
                 $leave->days_in_month = $overlapStart->diffInDays($overlapEnd) + 1;
 
                 return $leave;
-            });
+            }) : collect();
 
         $unpaidLeaveDays = $approvedLeaves
             ->where('leave_type', 'Unpaid Leave')
@@ -1267,17 +1273,22 @@ class PosController extends Controller
 
         $monthlySalary = (float) ($staff->salary ?? 0);
         $dailySalary = $monthlySalary / $monthStart->daysInMonth;
-        $leaveDeduction = min($monthlySalary, $dailySalary * $unpaidLeaveDays);
+        $grossSalary = $dailySalary * $payableDays;
+        $leaveDeduction = min($grossSalary, $dailySalary * $unpaidLeaveDays);
         $advanceTotal = (float) $monthAdvances->sum('amount');
-        $finalSalary = max(0, $monthlySalary - $leaveDeduction - $advanceTotal);
+        $finalSalary = max(0, $grossSalary - $leaveDeduction - $advanceTotal);
 
         return view('pos.staffs.salary', compact(
             'staff',
             'selectedMonth',
             'monthStart',
             'isMonthClosed',
+            'joiningDate',
+            'payrollStart',
+            'payableDays',
             'monthlySalary',
             'dailySalary',
+            'grossSalary',
             'approvedLeaves',
             'paidLeaveDays',
             'unpaidLeaveDays',

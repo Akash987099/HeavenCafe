@@ -43,7 +43,7 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <p class="text-sm font-medium text-slate-500">Monthly salary</p>
                     <p class="mt-2 text-2xl font-bold text-slate-800">&#8377;{{ number_format($monthlySalary, 2) }}</p>
-                    <p class="mt-1 text-xs text-slate-400">&#8377;{{ number_format($dailySalary, 2) }} per day</p>
+                    <p class="mt-1 text-xs text-slate-400">&#8377;{{ number_format($dailySalary, 2) }} per day &middot; {{ $payableDays }} payable day(s)</p>
                 </div>
                 <div class="rounded-2xl border border-orange-100 bg-orange-50 p-5">
                     <p class="text-sm font-medium text-orange-700">Unpaid leave deduction</p>
@@ -67,6 +67,9 @@
                     <h2 class="font-bold text-slate-800">Payroll details</h2>
                     <dl class="mt-4 space-y-3 text-sm">
                         <div class="flex justify-between gap-4"><dt class="text-slate-500">Working days</dt><dd class="font-semibold text-slate-700">{{ $monthStart->daysInMonth }}</dd></div>
+                        <div class="flex justify-between gap-4"><dt class="text-slate-500">Joining date</dt><dd class="font-semibold text-slate-700">{{ $joiningDate?->format('d M Y') ?: '-' }}</dd></div>
+                        <div class="flex justify-between gap-4"><dt class="text-slate-500">Salary payable period</dt><dd class="font-semibold text-slate-700">{{ $payableDays ? $payrollStart->format('d M') . ' - ' . $monthStart->copy()->endOfMonth()->format('d M Y') : '-' }}</dd></div>
+                        <div class="flex justify-between gap-4"><dt class="text-slate-500">Salary payable days</dt><dd class="font-semibold text-slate-700">{{ $payableDays }} day(s)</dd></div>
                         <div class="flex justify-between gap-4"><dt class="text-slate-500">Approved paid leave</dt><dd class="font-semibold text-slate-700">{{ $paidLeaveDays }} day(s)</dd></div>
                         <div class="flex justify-between gap-4"><dt class="text-slate-500">Approved unpaid leave</dt><dd class="font-semibold text-slate-700">{{ $unpaidLeaveDays }} day(s)</dd></div>
                         <div class="flex justify-between gap-4 border-t border-slate-100 pt-3"><dt class="font-semibold text-slate-700">Total deductions</dt><dd class="font-bold text-rose-600">&#8377;{{ number_format($leaveDeduction + $advanceTotal, 2) }}</dd></div>
@@ -75,7 +78,7 @@
                 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
                     <div class="border-b border-slate-200 px-5 py-4"><h2 class="font-bold text-slate-800">Salary formula</h2></div>
                     <div class="p-5 text-sm text-slate-600">
-                        <p>Monthly salary <span class="font-semibold text-slate-800">&#8377;{{ number_format($monthlySalary, 2) }}</span></p>
+                        <p>Salary for {{ $payableDays }} payable day(s) <span class="font-semibold text-slate-800">&#8377;{{ number_format($grossSalary, 2) }}</span></p>
                         <p class="mt-2">Less unpaid leave deduction <span class="font-semibold text-rose-600">- &#8377;{{ number_format($leaveDeduction, 2) }}</span></p>
                         <p class="mt-2">Less salary advances <span class="font-semibold text-rose-600">- &#8377;{{ number_format($advanceTotal, 2) }}</span></p>
                         <div class="mt-4 border-t border-slate-200 pt-4 text-base font-bold text-emerald-700">{{ $isMonthClosed ? 'Final payable' : 'Estimated payable' }}: &#8377;{{ number_format($finalSalary, 2) }}</div>
