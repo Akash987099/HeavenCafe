@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
 use App\Models\Category;
-use App\Models\CustomerOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -698,6 +697,7 @@ class PosController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $orders = PosOrder::with('details')
+            ->whereNull('payment_gateway')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('order_number', 'like', '%' . $search . '%')
@@ -729,16 +729,16 @@ class PosController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        // Customer self-orders belong to a store, so every POS user at that
-        // store can see them alongside the manually created POS bills.
-        $customerOrders = CustomerOrder::query()
+        // Self-orders are stored in pos_order too; payment_gateway identifies them.
+        $customerOrders = PosOrder::query()
             ->with('items')
             ->where('store_id', $user->store_id)
+            ->where('payment_gateway', 'payu')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('order_number', 'like', '%' . $search . '%')
                         ->orWhere('customer_name', 'like', '%' . $search . '%')
-                        ->orWhere('customer_mobile', 'like', '%' . $search . '%')
+                        ->orWhere('customer_phone', 'like', '%' . $search . '%')
                         ->orWhere('customer_email', 'like', '%' . $search . '%')
                         ->orWhereHas('items', fn ($items) => $items->where('product_name', 'like', '%' . $search . '%'));
                 });
@@ -750,7 +750,7 @@ class PosController extends Controller
         return view('pos.bills', compact('orders', 'customerOrders', 'search'));
     }
 
-    public function customerOrderView(CustomerOrder $order)
+    public function customerOrderView(PosOrder $order)
     {
         $this->ensureCustomerOrderStore($order);
         $order->load('store', 'items');
@@ -758,7 +758,7 @@ class PosController extends Controller
         return view('pos.customer-orders.view-v2', compact('order'));
     }
 
-    public function customerOrderReceipt(Request $request, CustomerOrder $order)
+    public function customerOrderReceipt(Request $request, PosOrder $order)
     {
         $this->ensureCustomerOrderStore($order);
         $order->load('store', 'items');
@@ -769,7 +769,7 @@ class PosController extends Controller
         ]);
     }
 
-    public function downloadCustomerOrderReceipt(CustomerOrder $order)
+    public function downloadCustomerOrderReceipt(PosOrder $order)
     {
         $this->ensureCustomerOrderStore($order);
         $order->load('store', 'items');
@@ -779,7 +779,7 @@ class PosController extends Controller
             ->download($order->order_number . '-receipt.pdf');
     }
 
-    public function markCustomerOrderDelivered(CustomerOrder $order)
+    public function markCustomerOrderDelivered(PosOrder $order)
     {
         $this->ensureCustomerOrderStore($order);
 
@@ -793,9 +793,13 @@ class PosController extends Controller
         return back()->with('success', 'Customer order marked as delivered and payment completed.');
     }
 
-    private function ensureCustomerOrderStore(CustomerOrder $order): void
+    private function ensureCustomerOrderStore(PosOrder $order): void
     {
-        abort_unless((int) $order->store_id === (int) Auth::guard('pos')->user()->store_id, 404);
+        abort_unless(
+            (string) $order->payment_gateway === 'payu'
+            && (int) $order->store_id === (int) Auth::guard('pos')->user()->store_id,
+            404
+        );
     }
 
     public function createRazorpayOrder($id)

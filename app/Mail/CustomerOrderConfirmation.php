@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\CustomerOrder;
+use App\Models\PosOrder;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -10,7 +10,7 @@ class CustomerOrderConfirmation extends Mailable
 {
     use SerializesModels;
 
-    public function __construct(public CustomerOrder $order)
+    public function __construct(public PosOrder $order)
     {
     }
 

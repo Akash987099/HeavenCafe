@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\CustomerOrder;
-use App\Models\CustomerOrderItem;
+use App\Models\Pos;
+use App\Models\PosOrder;
+use App\Models\PosOrderDetail;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreProduct;
@@ -145,11 +146,19 @@ class CustomerOrderController extends Controller
                 }
 
                 $subtotal = $cart->sum(fn ($item) => (float) $products->get($item['id'])->price * $item['qty']);
-                $order = CustomerOrder::create([
+                $posUser = Pos::query()->where('store_id', $store->id)->where('role', 1)->first()
+                    ?? Pos::query()->where('store_id', $store->id)->first();
+                if (! $posUser) {
+                    throw new \RuntimeException('No POS user is assigned to this store yet.');
+                }
+
+                $order = PosOrder::create([
+                    'pos_user_id' => $posUser->id,
+                    'store_id' => $store->id,
                     'store_id' => $store->id,
                     'order_number' => 'WEB-' . now()->format('YmdHis') . '-' . random_int(100, 999),
                     'customer_name' => $validated['customer_name'],
-                    'customer_mobile' => $validated['customer_mobile'] ?? null,
+                    'customer_phone' => $validated['customer_mobile'] ?? null,
                     'customer_email' => $validated['customer_email'] ?? null,
                     'status' => 'pending',
                     'payment_status' => 'pending',
@@ -161,8 +170,8 @@ class CustomerOrderController extends Controller
 
                 foreach ($cart as $item) {
                     $product = $products->get($item['id']);
-                    CustomerOrderItem::create([
-                        'customer_order_id' => $order->id,
+                    PosOrderDetail::create([
+                        'pos_order_id' => $order->id,
                         'product_id' => $product->id,
                         'product_name' => $product->name,
                         'price' => $product->price,
@@ -196,7 +205,7 @@ class CustomerOrderController extends Controller
     public function payuCallback(Request $request)
     {
         $response = $request->all();
-        $order = CustomerOrder::query()->where('payu_txnid', $request->input('txnid'))->firstOrFail();
+        $order = PosOrder::query()->where('payu_txnid', $request->input('txnid'))->firstOrFail();
         $isValid = $this->isValidPayuResponse($response)
             && hash_equals(number_format((float) $order->grand_total, 2, '.', ''), number_format((float) $request->input('amount'), 2, '.', ''))
             && hash_equals((string) $order->id, (string) $request->input('udf1'));
@@ -204,7 +213,7 @@ class CustomerOrderController extends Controller
         $sendEmail = false;
 
         DB::transaction(function () use ($order, $response, $isValid, $isSuccessful, &$sendEmail) {
-            $order = CustomerOrder::query()->with('items')->lockForUpdate()->findOrFail($order->id);
+            $order = PosOrder::query()->with('items')->lockForUpdate()->findOrFail($order->id);
 
             // Never change stock or payment state for a forged callback.
             if (!$isValid) {
@@ -264,7 +273,7 @@ class CustomerOrderController extends Controller
         return redirect()->route('customer-order.success', $order);
     }
 
-    public function success(Request $request, CustomerOrder $order)
+    public function success(Request $request, PosOrder $order)
     {
         abort_unless(
             (int) $request->session()->get('customer_order_store_id') === (int) $order->store_id
@@ -276,7 +285,7 @@ class CustomerOrderController extends Controller
         return view('customer-order.success-v2', compact('order'));
     }
 
-    public function receipt(Request $request, CustomerOrder $order)
+    public function receipt(Request $request, PosOrder $order)
     {
         $this->ensureOrderBelongsToSession($request, $order);
         $order->load('store', 'items');
@@ -287,7 +296,7 @@ class CustomerOrderController extends Controller
         ]);
     }
 
-    public function downloadReceipt(Request $request, CustomerOrder $order)
+    public function downloadReceipt(Request $request, PosOrder $order)
     {
         $this->ensureOrderBelongsToSession($request, $order);
         $order->load('store', 'items');
@@ -303,7 +312,7 @@ class CustomerOrderController extends Controller
         return $storeId ? Store::find($storeId) : null;
     }
 
-    private function ensureOrderBelongsToSession(Request $request, CustomerOrder $order): void
+    private function ensureOrderBelongsToSession(Request $request, PosOrder $order): void
     {
         abort_unless(
             (int) $request->session()->get('customer_order_store_id') === (int) $order->store_id
@@ -319,7 +328,7 @@ class CustomerOrderController extends Controller
         return $key !== '' && $salt !== '' && !str_starts_with($key, 'your_') && !str_starts_with($salt, 'your_');
     }
 
-    private function payuRequestPayload(CustomerOrder $order): array
+    private function payuRequestPayload(PosOrder $order): array
     {
         $key = (string) config('services.payu.key');
         $amount = number_format((float) $order->grand_total, 2, '.', '');
