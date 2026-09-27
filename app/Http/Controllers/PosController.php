@@ -1079,6 +1079,36 @@ class PosController extends Controller
         return view('pos.staffs.view', compact('staff'));
     }
 
+    public function profile()
+    {
+        $staff = Auth::guard('pos')->user()->load(['store', 'roleMaster']);
+
+        return view('pos.staffs.view', compact('staff'));
+    }
+
+    public function profileImageUpdate(Request $request)
+    {
+        $request->validate([
+            'staff_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $staff = Auth::guard('pos')->user();
+        $employeeDirectory = public_path('employees/' . $staff->staff_id);
+        File::ensureDirectoryExists($employeeDirectory);
+
+        if ($staff->staff_image && File::exists(public_path($staff->staff_image))) {
+            File::delete(public_path($staff->staff_image));
+        }
+
+        $image = $request->file('staff_image');
+        $filename = uniqid('profile_', true) . '.' . $image->extension();
+        $image->move($employeeDirectory, $filename);
+        $staff->staff_image = 'employees/' . $staff->staff_id . '/' . $filename;
+        $staff->save();
+
+        return back()->with('success', 'Profile image updated successfully.');
+    }
+
     public function staffEdit($id)
     {
         $staff = Pos::query()
@@ -1596,8 +1626,14 @@ class PosController extends Controller
 
     public function staffOfferLetter($id)
     {
+        $currentUserId = Auth::guard('pos')->id();
+
         $pos = Pos::with('store')
-            ->where('user_id', Auth::guard('pos')->id())
+            ->where(function ($query) use ($currentUserId) {
+                // A manager can open letters for their staff; a staff member can open only their own letter.
+                $query->where('user_id', $currentUserId)
+                    ->orWhere('id', $currentUserId);
+            })
             ->findOrFail($id);
         $company = Setting::where('slug', 'web_name')->first();
 

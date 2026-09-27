@@ -378,14 +378,21 @@
             <i class="fas fa-bell text-slate-500 text-xl
                    hover:text-[#128C7E] transition"></i>
 
-            <div class="flex items-center gap-2
-                   border-l border-slate-200 pl-3 md:pl-4">
-
-                <span class="text-sm font-semibold text-slate-700
-                       hidden sm:block">
-                    {{ Auth::guard('pos')->user()->name }}
-                </span>
-
+            @php($posUser = Auth::guard('pos')->user())
+            <div class="relative border-l border-slate-200 pl-3 md:pl-4" id="profileMenu">
+                <button type="button" id="profileMenuButton" aria-expanded="false" aria-haspopup="true" class="flex items-center gap-2 rounded-xl p-1 text-left hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#128C7E]/20">
+                    @if ($posUser->staff_image)
+                        <img src="{{ asset($posUser->staff_image) }}" alt="{{ $posUser->name }}" class="h-9 w-9 rounded-xl object-cover ring-1 ring-slate-200">
+                    @else
+                        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#128C7E] text-sm font-bold text-white">{{ strtoupper(substr($posUser->name, 0, 1)) }}</span>
+                    @endif
+                    <span class="hidden text-sm font-semibold text-slate-700 sm:block">{{ $posUser->name }}</span><i class="fas fa-chevron-down hidden text-xs text-slate-400 sm:block"></i>
+                </button>
+                <div id="profileMenuDropdown" class="absolute right-0 z-50 mt-2 hidden w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+                    <div class="border-b border-slate-100 px-4 py-3"><p class="truncate text-sm font-semibold text-slate-800">{{ $posUser->name }}</p><p class="truncate text-xs text-slate-400">{{ $posUser->email }}</p></div>
+                    <a href="{{ route('pos.profile') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-user w-4 text-[#128C7E]"></i> View Profile</a>
+                    <a href="{{ route('pos.profile') }}#change-profile-image" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-camera w-4 text-[#128C7E]"></i> Change Profile Image</a>
+                </div>
             </div>
 
         </div>
@@ -488,6 +495,20 @@
                 }
 
             });
+
+            const profileMenuButton = document.getElementById('profileMenuButton');
+            const profileMenuDropdown = document.getElementById('profileMenuDropdown');
+            const profileMenu = document.getElementById('profileMenu');
+            if (profileMenuButton && profileMenuDropdown) {
+                profileMenuButton.addEventListener('click', function () {
+                    const isOpen = !profileMenuDropdown.classList.contains('hidden');
+                    profileMenuDropdown.classList.toggle('hidden', isOpen);
+                    profileMenuButton.setAttribute('aria-expanded', String(!isOpen));
+                });
+                document.addEventListener('click', function (event) {
+                    if (!profileMenu.contains(event.target)) { profileMenuDropdown.classList.add('hidden'); profileMenuButton.setAttribute('aria-expanded', 'false'); }
+                });
+            }
 
         });
     </script>
