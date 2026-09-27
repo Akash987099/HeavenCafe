@@ -1,0 +1,24 @@
+@extends('pos.layout.app')
+
+@section('content')
+    <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6">
+        <div class="mx-auto max-w-7xl">
+            <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wider text-violet-600">Store event enquiries</p><h1 class="mt-1 text-2xl font-bold text-slate-800 md:text-3xl">Party Bookings</h1><p class="mt-1 text-sm text-slate-500">Bookings registered for your store and their linked food orders.</p></div>
+                <form method="GET" class="flex gap-2"><input name="search" value="{{ $search }}" placeholder="Customer, mobile or party..." class="h-10 w-64 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-violet-500"><button class="rounded-xl bg-slate-800 px-4 text-xs font-bold text-white">Search</button>@if($search)<a href="{{ route('pos.party-bookings') }}" class="self-center text-xs font-bold text-slate-500">Clear</a>@endif</form>
+            </div>
+            <div class="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm">
+                <div class="flex items-center justify-between border-b border-violet-100 px-5 py-4"><h2 class="font-bold text-slate-800">Registered party enquiries</h2><span class="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700">{{ $bookings->total() }} bookings</span></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-violet-50"><tr><th class="px-5 py-3 text-left text-xs font-bold uppercase text-slate-500">Booking</th><th class="px-5 py-3 text-left text-xs font-bold uppercase text-slate-500">Customer</th><th class="px-5 py-3 text-left text-xs font-bold uppercase text-slate-500">Event details</th><th class="px-5 py-3 text-left text-xs font-bold uppercase text-slate-500">Requirements</th><th class="px-5 py-3 text-center text-xs font-bold uppercase text-slate-500">Food order</th><th class="px-5 py-3 text-center text-xs font-bold uppercase text-slate-500">Status</th><th class="px-5 py-3 text-center text-xs font-bold uppercase text-slate-500">View</th></tr></thead><tbody class="divide-y divide-slate-100">
+                    @forelse($bookings as $booking)
+                        @php($foodOrder = $booking->posOrders->sortByDesc('id')->first())
+                        <tr class="align-top hover:bg-violet-50/30"><td class="px-5 py-4"><p class="font-bold text-violet-700">PR-{{ str_pad((string) $booking->id, 5, '0', STR_PAD_LEFT) }}</p><p class="mt-1 text-xs text-slate-500">{{ $booking->partyMaster->name ?? 'Party' }}</p><p class="mt-1 text-xs text-slate-400">{{ $booking->created_at->format('d M Y, h:i A') }}</p></td><td class="px-5 py-4"><p class="font-bold text-slate-800">{{ $booking->customer_name }}</p><p class="mt-1 text-xs text-slate-500">{{ $booking->mobile }}</p><p class="mt-1 text-xs text-slate-400">{{ $booking->email ?: '-' }}</p></td><td class="px-5 py-4"><p class="font-semibold text-slate-700">{{ $booking->event_date->format('d M Y') }}{{ $booking->event_time ? ' · ' . \Carbon\Carbon::parse($booking->event_time)->format('h:i A') : '' }}</p><p class="mt-1 text-xs text-slate-500">{{ $booking->guest_count }} guests{{ $booking->venue ? ' · ' . $booking->venue : '' }}</p></td><td class="max-w-xs px-5 py-4 text-xs leading-5 text-slate-600">{{ $booking->requirements ?: '-' }}</td><td class="px-5 py-4 text-center">@if($foodOrder)<p class="font-bold text-orange-700">{{ $foodOrder->order_number }}</p><p class="mt-1 text-xs text-slate-500">₹{{ number_format($foodOrder->grand_total, 2) }}</p><p class="mt-1 text-xs font-semibold {{ $foodOrder->payment_status === 'completed' ? 'text-emerald-600' : 'text-amber-600' }}">{{ ucfirst($foodOrder->payment_status ?? 'pending') }}</p>@else<span class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">No food order yet</span>@endif</td><td class="px-5 py-4 text-center"><span class="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">{{ ucfirst($booking->status) }}</span></td><td class="px-5 py-4 text-center"><a href="{{ route('pos.party-bookings.view', $booking) }}" title="View booking details" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white"><i class="fas fa-eye"></i></a></td></tr>
+                    @empty
+                        <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-slate-400">No party bookings found for this store.</td></tr>
+                    @endforelse
+                </tbody></table></div>
+                @if($bookings->hasPages())<div class="border-t border-slate-100 px-5 py-3">{{ $bookings->links('shared.pagination') }}</div>@endif
+            </div>
+        </div>
+    </div>
+@endsection

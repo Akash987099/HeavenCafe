@@ -21,6 +21,8 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::post('/payment/verify', 'verifyRazorpayPayment')->name('order.razorpay.verify');
 
         Route::get('/bills', 'bills')->name('bills');
+        Route::get('/party-bookings', 'partyBookings')->name('party-bookings');
+        Route::get('/party-bookings/{booking}', 'partyBookingView')->name('party-bookings.view');
         Route::get('/profile', 'profile')->name('profile');
         Route::post('/profile/image', 'profileImageUpdate')->name('profile.image.update');
         Route::get('/customer-orders/{order}/receipt', 'customerOrderReceipt')->name('customer-orders.receipt');

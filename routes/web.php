@@ -54,6 +54,8 @@ use App\Http\Controllers\PosUserController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\Api\FaqController as ApiFaqController;
 use App\Http\Controllers\CustomerOrderController;
+use App\Http\Controllers\PartyMasterController;
+use App\Http\Controllers\PartyRegistrationController;
 
 // Cafe
 use App\Http\Controllers\cafe\TypeController;
@@ -85,6 +87,14 @@ Route::prefix('self-order')->controller(CustomerOrderController::class)->name('c
     Route::get('/success/{order}', 'success')->name('success');
     Route::get('/receipt/{order}', 'receipt')->name('receipt');
     Route::get('/receipt/{order}/download', 'downloadReceipt')->name('receipt.download');
+});
+
+// Public party/event enquiry and registration flow.
+Route::prefix('booking')->controller(PartyRegistrationController::class)->name('booking.')->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/store', 'selectStore')->name('store.select');
+    Route::post('/', 'store')->name('store');
+    Route::get('{partyMaster:slug}', 'show')->name('show');
 });
 
 // Fallback API route for environments where api route cache/subfolder routing is stale.
@@ -127,6 +137,20 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('store/order/{order}', 'storeOrderView')->name('store-order.view');
         Route::post('store/order/{order}/status', 'updateStoreOrderStatus')->name('store-order.status');
         Route::get('store/order/{order}/invoice', 'downloadStoreOrderInvoice')->name('store-order.invoice');
+    });
+
+    // Backend endpoints for the party/event master. A management UI can use these routes later.
+    Route::prefix('party-master')->controller(PartyMasterController::class)->name('party_master.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::post('', 'store')->name('store');
+        Route::get('{partyMaster}', 'show')->name('show');
+        Route::match(['put', 'patch'], '{partyMaster}', 'update')->name('update');
+        Route::delete('{partyMaster}', 'destroy')->name('destroy');
+    });
+
+    Route::prefix('admin-party-bookings')->controller(PartyRegistrationController::class)->name('party_bookings.')->group(function () {
+        Route::get('', 'adminIndex')->name('index');
+        Route::get('{booking}', 'adminShow')->name('view');
     });
 
     Route::prefix('policies')->controller(PolicyController::class)->name('policy.')->group(function () {

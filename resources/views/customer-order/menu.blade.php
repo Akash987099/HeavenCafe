@@ -18,6 +18,10 @@
         </div>
 
         @if(session('error'))<div class="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{{ session('error') }}</div>@endif
+        @if(session('success'))<div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>@endif
+        @if($partyRegistration)
+            <div class="mb-5 rounded-2xl border border-orange-200 bg-orange-50 p-4"><div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-xs font-bold uppercase tracking-wider text-orange-700">Party food order</p><p class="mt-1 text-sm font-bold text-slate-800">{{ $partyRegistration->partyMaster->name ?? 'Party registration' }} · {{ $partyRegistration->event_date->format('d M Y') }} · {{ $partyRegistration->guest_count }} guests</p></div><span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-orange-700">PR-{{ str_pad((string) $partyRegistration->id, 5, '0', STR_PAD_LEFT) }}</span></div><p class="mt-2 text-xs text-slate-500">Your selected menu will be saved as a POS order and attached to this party registration.</p></div>
+        @endif
 
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
             <section class="lg:col-span-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -41,9 +45,9 @@
                     @csrf
                     <div id="cartInputs"></div>
                     <label class="mb-1 block text-xs font-semibold text-slate-600">Order type</label><select name="fulfillment_type" required class="mb-3 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-orange-500"><option value="packing" @selected(old('fulfillment_type', 'packing') === 'packing')>Packing / Takeaway</option><option value="dine_in" @selected(old('fulfillment_type') === 'dine_in')>Dine In</option></select>
-                    <label class="mb-1 block text-xs font-semibold text-slate-600">Your name</label><input name="customer_name" required maxlength="100" value="{{ old('customer_name') }}" class="mb-3 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500" placeholder="Enter your name">
-                    <label class="mb-1 block text-xs font-semibold text-slate-600">Mobile number</label><input name="customer_mobile" required maxlength="20" value="{{ old('customer_mobile') }}" class="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500" placeholder="Enter mobile number">
-                    <label class="mb-1 mt-3 block text-xs font-semibold text-slate-600">Email <span class="font-normal text-slate-400">(PayU receipt and order confirmation)</span></label><input type="email" name="customer_email" required maxlength="191" value="{{ old('customer_email') }}" class="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500" placeholder="you@example.com">
+                    <label class="mb-1 block text-xs font-semibold text-slate-600">Your name</label><input name="customer_name" required maxlength="100" value="{{ old('customer_name', $partyRegistration->customer_name ?? '') }}" class="mb-3 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500" placeholder="Enter your name">
+                    <label class="mb-1 block text-xs font-semibold text-slate-600">Mobile number</label><input name="customer_mobile" required maxlength="20" value="{{ old('customer_mobile', $partyRegistration->mobile ?? '') }}" class="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500" placeholder="Enter mobile number">
+                    <label class="mb-1 mt-3 block text-xs font-semibold text-slate-600">Email <span class="font-normal text-slate-400">(Final paid order confirmation)</span></label><input type="email" name="customer_email" required maxlength="191" value="{{ old('customer_email', $partyRegistration->email ?? '') }}" class="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-orange-500" placeholder="you@example.com">
                     <div class="mt-4 flex justify-between border-t border-slate-100 pt-4 text-sm"><span class="text-slate-500">Total</span><strong id="cartTotal" class="text-orange-700">₹0.00</strong></div>
                     <button class="mt-4 h-12 w-full rounded-xl bg-orange-600 font-semibold text-white transition hover:bg-orange-700">Place order</button>
                 </form>

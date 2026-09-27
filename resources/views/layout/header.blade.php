@@ -1830,9 +1830,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? '' : 'collapsed' }}"
+                    <a class="nav-link {{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') || request()->routeIs('party_master.*') || request()->routeIs('party_bookings.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#sidebarMaster" role="button"
-                        aria-expanded="{{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'true' : 'false' }}"
+                        aria-expanded="{{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') || request()->routeIs('party_master.*') || request()->routeIs('party_bookings.*') ? 'true' : 'false' }}"
                         aria-controls="sidebarMaster">
                         <div
                             class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
@@ -1840,7 +1840,7 @@
                         </div>
                         <span class="nav-link-text ms-1">Master</span>
                     </a>
-                    <div class="collapse {{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') ? 'show' : '' }}"
+                    <div class="collapse {{ request()->routeIs('role.*') || request()->routeIs('status.*') || request()->routeIs('country.*') || request()->routeIs('state.*') || request()->routeIs('district.*') || request()->routeIs('tehsil.*') || request()->routeIs('block.*') || request()->routeIs('village.*') || request()->routeIs('party_master.*') || request()->routeIs('party_bookings.*') ? 'show' : '' }}"
                         id="sidebarMaster">
                         <div class="side-submenu">
                             <a class="nav-link {{ request()->routeIs('role.*') ? 'active' : '' }}"
@@ -1859,6 +1859,10 @@
                                 href="{{ route('block.index') }}"><i class="fas fa-vector-square"></i>Block</a>
                             <a class="nav-link {{ request()->routeIs('village.*') ? 'active' : '' }}"
                                 href="{{ route('village.index') }}"><i class="fas fa-house"></i>Village</a>
+                            <a class="nav-link {{ request()->routeIs('party_master.*') ? 'active' : '' }}"
+                                href="{{ route('party_master.index') }}"><i class="fas fa-champagne-glasses"></i>Party Master</a>
+                            <a class="nav-link {{ request()->routeIs('party_bookings.*') ? 'active' : '' }}"
+                                href="{{ route('party_bookings.index') }}"><i class="fas fa-calendar-check"></i>Party Bookings</a>
                         </div>
                     </div>
                 </li>

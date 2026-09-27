@@ -106,6 +106,14 @@
         </a>
 
         @if (Auth::guard('pos')->user()->role == 1)
+            <a href="{{ route('pos.party-bookings') }}"
+                class="sidebar-link {{ request()->routeIs('pos.party-bookings') ? 'active' : '' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600">
+                <i class="fas fa-calendar-check w-5 text-center"></i>
+                <span>Party Bookings</span>
+            </a>
+        @endif
+
+        @if (Auth::guard('pos')->user()->role == 1)
         <a href="{{ route('pos_product.index') }}"
             class="sidebar-link {{ request()->routeIs('pos_product.index*') ? 'active' : '' }}
                   flex items-center gap-3 px-3 py-2.5 rounded-xl
@@ -271,6 +279,14 @@
             <i class="fas fa-shopping-cart w-5 text-center"></i>
             <span>Bills</span>
         </a>
+
+        @if (Auth::guard('pos')->user()->role == 1)
+            <a href="{{ route('pos.party-bookings') }}"
+                class="sidebar-link {{ request()->routeIs('pos.party-bookings') ? 'active' : '' }} flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                <i class="fas fa-calendar-check w-5 text-center"></i>
+                <span>Party Bookings</span>
+            </a>
+        @endif
 
         <a href="{{ route('pos_product.orders') }}"
             class="sidebar-link {{ request()->routeIs('pos_product.orders*') ? 'active' : '' }}

@@ -26,6 +26,7 @@ class PosOrder extends Model
         'payu_txnid',
         'payu_payment_id',
         'payu_response',
+        'party_registration_id',
         'razorpay_order_id',
         'razorpay_payment_id',
         'razorpay_signature',
@@ -36,6 +37,11 @@ class PosOrder extends Model
     public function store()
     {
         return $this->belongsTo(Store::class, 'store_id');
+    }
+
+    public function partyRegistration()
+    {
+        return $this->belongsTo(PartyRegistration::class);
     }
 
     // Customer self-order views use `items`; POS screens use `details`.

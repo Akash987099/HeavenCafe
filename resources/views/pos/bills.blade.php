@@ -53,18 +53,27 @@
         <div class="mb-6 bg-white rounded-2xl border border-orange-200 shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-orange-100 flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-800">Customer Self Orders</h2>
-                    <p class="text-xs text-slate-400 mt-1">Orders placed directly by customers for this store.</p>
+                    <h2 class="text-lg font-bold text-slate-800">Online Orders</h2>
+                    <p class="text-xs text-slate-400 mt-1">Normal self-orders and party booking food orders for this store.</p>
                 </div>
                 <span class="inline-flex px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold">{{ $customerOrders->total() }} orders</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="bg-orange-50"><tr><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Order no.</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Customer</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Items</th><th class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Amount</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Payment</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Order type</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Order status</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Date</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Action</th></tr></thead>
+                    <thead class="bg-orange-50"><tr><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Order no.</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Source</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Customer</th><th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Items</th><th class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Amount</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Payment</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Order type</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Order status</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Date</th><th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Action</th></tr></thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($customerOrders as $customerOrder)
                             <tr class="hover:bg-orange-50/40 transition">
-                                <td class="px-5 py-4 font-semibold text-slate-800">{{ $customerOrder->order_number }}<p class="mt-1 text-[11px] font-normal text-orange-600">Customer self order</p></td>
+                                <td class="px-5 py-4 font-semibold text-slate-800">{{ $customerOrder->order_number }}</td>
+                                <td class="px-5 py-4">
+                                    @if($customerOrder->party_registration_id)
+                                        <span class="inline-flex rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">Party Booking</span>
+                                        <p class="mt-1 text-[11px] text-violet-600">PR-{{ str_pad((string) $customerOrder->party_registration_id, 5, '0', STR_PAD_LEFT) }}{{ $customerOrder->partyRegistration?->partyMaster?->name ? ' · ' . $customerOrder->partyRegistration->partyMaster->name : '' }}</p>
+                                    @else
+                                        <span class="inline-flex rounded-full bg-orange-100 px-3 py-1.5 text-xs font-bold text-orange-700">Self Order</span>
+                                        <p class="mt-1 text-[11px] text-orange-600">Website menu order</p>
+                                    @endif
+                                </td>
                                 <td class="px-5 py-4"><p class="font-semibold text-slate-800">{{ $customerOrder->customer_name }}</p><p class="mt-1 text-xs text-slate-400">{{ $customerOrder->customer_mobile ?: ($customerOrder->customer_email ?: '-') }}</p></td>
                                 <td class="px-5 py-4">
                                     <div class="flex flex-col gap-1">
@@ -84,7 +93,7 @@
                                 <td class="px-5 py-4 text-center"><a href="{{ route('pos.customer-orders.view', $customerOrder) }}" class="inline-flex items-center justify-center rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-orange-600 hover:text-white">View</a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="px-5 py-8 text-center text-sm text-slate-400">No customer self-orders for this store yet.</td></tr>
+                            <tr><td colspan="10" class="px-5 py-8 text-center text-sm text-slate-400">No online orders for this store yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -246,6 +255,7 @@
                                     >
                                         {{ $order->order_number }}
                                     </span>
+                                    <p class="mt-1 text-[11px] font-semibold text-[#128C7E]">POS / Manual Bill</p>
 
                                 </td>
 

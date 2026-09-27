@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Pos;
 use App\Models\PosOrder;
 use App\Models\PosOrderDetail;
+use App\Models\PartyRegistration;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreProduct;
@@ -55,7 +56,9 @@ class CustomerOrderController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('customer-order.menu', compact('store', 'categories'));
+        $partyRegistration = $this->selectedPartyRegistration($request, $store);
+
+        return view('customer-order.menu', compact('store', 'categories', 'partyRegistration'));
     }
 
     public function products(Request $request)
@@ -119,7 +122,8 @@ class CustomerOrderController extends Controller
             ->values();
 
         try {
-            $order = DB::transaction(function () use ($cart, $store, $validated) {
+            $partyRegistration = $this->selectedPartyRegistration($request, $store);
+            $order = DB::transaction(function () use ($cart, $store, $validated, $partyRegistration) {
                 $stockRows = StoreProduct::query()
                     ->where('store_id', $store->id)
                     ->whereIn('product_id', $cart->pluck('id'))
@@ -155,7 +159,7 @@ class CustomerOrderController extends Controller
                 $order = PosOrder::create([
                     'pos_user_id' => $posUser->id,
                     'store_id' => $store->id,
-                    'store_id' => $store->id,
+                    'party_registration_id' => $partyRegistration?->id,
                     'order_number' => 'WEB-' . now()->format('YmdHis') . '-' . random_int(100, 999),
                     'customer_name' => $validated['customer_name'],
                     'customer_phone' => $validated['customer_mobile'] ?? null,
@@ -310,6 +314,15 @@ class CustomerOrderController extends Controller
     {
         $storeId = $request->session()->get('customer_order_store_id');
         return $storeId ? Store::find($storeId) : null;
+    }
+
+    private function selectedPartyRegistration(Request $request, Store $store): ?PartyRegistration
+    {
+        $registrationId = $request->session()->get('party_registration_id');
+
+        return $registrationId
+            ? PartyRegistration::query()->whereKey($registrationId)->where('store_id', $store->id)->first()
+            : null;
     }
 
     private function ensureOrderBelongsToSession(Request $request, PosOrder $order): void

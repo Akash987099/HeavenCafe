@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
 use App\Models\Category;
+use App\Models\PartyRegistration;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -731,7 +732,7 @@ class PosController extends Controller
 
         // Self-orders are stored in pos_order too; payment_gateway identifies them.
         $customerOrders = PosOrder::query()
-            ->with('items')
+            ->with(['items', 'partyRegistration.partyMaster'])
             ->where('store_id', $user->store_id)
             ->where('payment_gateway', 'payu')
             ->when($search !== '', function ($query) use ($search) {
@@ -748,6 +749,47 @@ class PosController extends Controller
             ->withQueryString();
 
         return view('pos.bills', compact('orders', 'customerOrders', 'search'));
+    }
+
+    public function partyBookings(Request $request)
+    {
+        $user = Auth::guard('pos')->user();
+        abort_unless((int) $user->role === 1, 403);
+
+        $search = trim((string) $request->query('search', ''));
+        $bookings = PartyRegistration::query()
+            ->with([
+                'partyMaster:id,name',
+                'posOrders:id,party_registration_id,order_number,grand_total,payment_status,status,created_at',
+            ])
+            ->where('store_id', $user->store_id)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('customer_name', 'like', '%' . $search . '%')
+                        ->orWhere('mobile', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhereHas('partyMaster', fn ($party) => $party->where('name', 'like', '%' . $search . '%'));
+                });
+            })
+            ->latest('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('pos.party-bookings', compact('bookings', 'search'));
+    }
+
+    public function partyBookingView(PartyRegistration $booking)
+    {
+        $user = Auth::guard('pos')->user();
+        abort_unless((int) $user->role === 1 && (int) $booking->store_id === (int) $user->store_id, 404);
+
+        $booking->load([
+            'partyMaster',
+            'store',
+            'posOrders' => fn ($orders) => $orders->with('details')->latest('id'),
+        ]);
+
+        return view('pos.party-booking-view', compact('booking'));
     }
 
     public function customerOrderView(PosOrder $order)
