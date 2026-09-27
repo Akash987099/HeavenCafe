@@ -580,7 +580,10 @@
     @media print {
 
         body.thermal-print {
-            width: 80mm !important;
+            /* Keep the print canvas full width so the 80mm receipt can be centred
+               in browser/A4 print preview as well as on a thermal printer. */
+            width: 100% !important;
+            min-height: 100% !important;
 
             margin: 0 !important;
             padding: 0 !important;
@@ -589,14 +592,21 @@
         }
 
         body.thermal-print .invoice-page {
+            /* Override the common print rule: position:absolute; left:0. */
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            right: auto !important;
             width: 80mm !important;
+            max-width: 80mm !important;
+            margin: 0 auto !important;
         }
 
         body.thermal-print .invoice-box {
             width: 80mm !important;
             max-width: 80mm !important;
 
-            margin: 0 !important;
+            margin: 0 auto !important;
 
             border: none !important;
 
@@ -1251,6 +1261,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const printThermalBtn =
         document.getElementById('printThermalBtn');
 
+    function setThermalPageSize() {
+        let style = document.getElementById('thermalPageSize');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'thermalPageSize';
+            document.head.appendChild(style);
+        }
+
+        // A roll printer determines the height from the receipt content.
+        // This prevents the remaining A4 page from being fed/printed.
+        style.textContent = '@page { size: 80mm auto; margin: 0; }';
+    }
+
+    function clearThermalPageSize() {
+        document.getElementById('thermalPageSize')?.remove();
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -1261,6 +1288,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (printA4Btn) {
 
         printA4Btn.addEventListener('click', function () {
+
+            clearThermalPageSize();
 
             document.body.classList.remove(
                 'thermal-print'
@@ -1286,6 +1315,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (printThermalBtn) {
 
         printThermalBtn.addEventListener('click', function () {
+
+            setThermalPageSize();
 
             document.body.classList.remove(
                 'a4-print'
@@ -1314,6 +1345,8 @@ document.addEventListener('DOMContentLoaded', function () {
             'a4-print',
             'thermal-print'
         );
+
+        clearThermalPageSize();
 
     });
 
