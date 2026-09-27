@@ -9,7 +9,10 @@
                         <h6 class="m-0">Staff List — {{ $pos->name }}</h6>
                         <p class="text-xs text-secondary mb-0 mt-1">POS ID: {{ $pos->staff_id }} · {{ $staffs->total() }} staff members</p>
                     </div>
-                    <a href="{{ route('pos_user.index') }}" class="btn btn-outline-secondary btn-sm">Back to POS Users</a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('pos_user.tracking', $pos->id) }}" class="btn btn-primary btn-sm"><i class="fas fa-chart-line me-1"></i> Track Staff</a>
+                        <a href="{{ route('pos_user.index') }}" class="btn btn-outline-secondary btn-sm">Back to POS Users</a>
+                    </div>
                 </div>
 
                 <div class="card-body px-0 pt-0 pb-2">

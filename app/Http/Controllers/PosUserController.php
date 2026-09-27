@@ -15,6 +15,10 @@ use App\Models\StoreOrderItem;
 use App\Models\StoreProduct;
 use App\Models\Setting;
 use App\Models\Role;
+use App\Models\Leave;
+use App\Models\StaffTask;
+use App\Models\StaffSalaryAdvance;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -142,6 +146,57 @@ class PosUserController extends Controller
             ->paginate(config('constants.pagination_limit'));
 
         return view('posuser.staff-list', compact('pos', 'staffs'));
+    }
+
+    public function tracking(Request $request, $id)
+    {
+        $request->validate(['month' => 'nullable|date_format:Y-m']);
+
+        $pos = Pos::where('role', 1)->findOrFail($id);
+        $selectedMonth = $request->query('month', now()->format('Y-m'));
+        $monthStart = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        $staffs = Pos::with('roleMaster')->where('user_id', $pos->id)->orderBy('name')->get();
+
+        $salaryRows = $staffs->map(function (Pos $staff) use ($pos, $monthStart, $monthEnd) {
+            return $this->salaryTrackingSummary($staff, $pos->id, $monthStart, $monthEnd);
+        });
+        $staffIds = $staffs->pluck('id');
+        $tasks = StaffTask::with('staff')->where('user_id', $pos->id)->latest()->take(20)->get();
+        $leaves = Leave::with('pos')->whereIn('pos_user_id', $staffIds)
+            ->whereDate('start_date', '<=', $monthEnd->toDateString())
+            ->whereDate('end_date', '>=', $monthStart->toDateString())
+            ->latest('id')->take(20)->get();
+        $advances = StaffSalaryAdvance::with('staff')->where('user_id', $pos->id)
+            ->whereBetween('advance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->latest('advance_date')->get();
+
+        return view('posuser.tracking', compact('pos', 'selectedMonth', 'monthStart', 'salaryRows', 'tasks', 'leaves', 'advances'));
+    }
+
+    private function salaryTrackingSummary(Pos $staff, int $managerId, Carbon $monthStart, Carbon $monthEnd): array
+    {
+        $joiningDate = $staff->date_of_joining?->copy()->startOfDay();
+        $hasJoined = ! $joiningDate || $joiningDate->lte($monthEnd);
+        $payrollStart = $joiningDate && $joiningDate->gt($monthStart) ? $joiningDate : $monthStart;
+        $payableDays = $hasJoined ? $payrollStart->diffInDays($monthEnd) + 1 : 0;
+        $unpaidLeaveDays = $hasJoined ? Leave::where('pos_user_id', $staff->id)->where('status', 'approved')
+            ->where('leave_type', 'Unpaid Leave')->whereDate('start_date', '<=', $monthEnd->toDateString())
+            ->whereDate('end_date', '>=', $payrollStart->toDateString())->get()
+            ->sum(function (Leave $leave) use ($payrollStart, $monthEnd) {
+                $start = Carbon::parse($leave->start_date)->startOfDay(); $end = Carbon::parse($leave->end_date)->startOfDay();
+                return ($start->lt($payrollStart) ? $payrollStart->copy() : $start)->diffInDays($end->gt($monthEnd) ? $monthEnd->copy() : $end) + 1;
+            }) : 0;
+        $monthlySalary = (float) ($staff->salary ?? 0);
+        $dailySalary = $monthlySalary / $monthStart->daysInMonth;
+        $grossSalary = $dailySalary * $payableDays;
+        $leaveDeduction = min($grossSalary, $dailySalary * $unpaidLeaveDays);
+        $advanceTotal = (float) StaffSalaryAdvance::where('staff_id', $staff->id)->where('user_id', $managerId)
+            ->whereBetween('advance_date', [$monthStart->toDateString(), $monthEnd->toDateString()])->sum('amount');
+
+        return compact('staff', 'payableDays', 'grossSalary', 'leaveDeduction', 'advanceTotal') + [
+            'finalSalary' => max(0, $grossSalary - $leaveDeduction - $advanceTotal),
+        ];
     }
 
     public function update(Request $request)

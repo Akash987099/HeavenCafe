@@ -64,6 +64,10 @@
                                             <p class="text-xs font-weight-bold mb-0">{{ $item->store->name }}</p>
                                         </td>
                                         <td>
+                                            <a href="{{ route('pos_user.tracking', $item->id) }}"
+                                                class="text-secondary font-weight-bold text-xs me-3" title="Track Staff">
+                                                <i class="fas fa-chart-line me-1"></i> Track
+                                            </a>
                                             <a href="{{ route('pos_user.offer-letter', $item->id) }}" target="_blank"
                                                 class="text-secondary font-weight-bold text-xs me-3" title="View Offer Letter">
                                                 <i class="fas fa-file-alt me-1"></i> Offer Letter
