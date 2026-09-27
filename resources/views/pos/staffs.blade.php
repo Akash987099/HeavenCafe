@@ -16,15 +16,17 @@
                         </h1>
                     </div>
 
-                    <a href="{{ route('pos.staff.add') }}"
-                        class="inline-flex items-center gap-2
-                           px-4 py-2.5 rounded-xl
-                           bg-[#128C7E] text-white
-                           text-sm font-semibold
-                           hover:bg-[#0f766e] transition">
-                        <i class="fas fa-plus"></i>
-                        New Staff
-                    </a>
+                    <div class="flex items-center gap-3">
+                        @if ((int) auth('pos')->user()->role === 1)
+                            <a href="{{ route('pos.salary.list') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-sm font-semibold text-white hover:bg-amber-600 transition">
+                                <i class="fas fa-wallet"></i> Salary List
+                            </a>
+                        @endif
+                        <a href="{{ route('pos.staff.add') }}"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#128C7E] text-white text-sm font-semibold hover:bg-[#0f766e] transition">
+                            <i class="fas fa-plus"></i> New Staff
+                        </a>
+                    </div>
 
                 </div>
 
