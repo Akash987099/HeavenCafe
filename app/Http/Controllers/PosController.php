@@ -500,10 +500,100 @@ class PosController extends Controller
             ->firstOrFail();
 
 
-        return view(
-            'pos.order-view',
-            compact('order')
-        );
+        $editableItems = $order->details->map(function ($detail) {
+            return [
+                'product_id' => $detail->product_id,
+                'product_name' => $detail->product_name,
+                'price' => (float) $detail->price,
+                'quantity' => (int) $detail->quantity,
+                'total' => (float) $detail->total,
+            ];
+        })->values();
+
+        $categories = Category::query()
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('pos.order-view', compact('order', 'editableItems', 'categories'));
+    }
+
+    /** Update the editable cart before the order is paid. */
+    public function updateOrderItems(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
+        ]);
+
+        $order = PosOrder::where('id', $id)
+            ->where('pos_user_id', Auth::guard('pos')->id())
+            ->firstOrFail();
+
+        if (in_array($order->payment_status, ['paid', 'completed'], true)) {
+            return response()->json([
+                'message' => 'Paid order items cannot be changed.',
+            ], 422);
+        }
+
+        $productIds = collect($validated['items'])->pluck('product_id');
+        $products = Product::whereIn('id', $productIds)
+            ->where('status', 'active')
+            ->get(['id', 'name', 'price'])
+            ->keyBy('id');
+
+        if ($products->count() !== $productIds->count()) {
+            return response()->json([
+                'message' => 'One or more selected products are no longer available.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($order, $validated, $products) {
+            $order->details()->delete();
+            $subtotal = 0;
+
+            foreach ($validated['items'] as $item) {
+                $product = $products->get($item['product_id']);
+                $quantity = (int) $item['quantity'];
+                $price = (float) $product->price;
+                $total = $price * $quantity;
+
+                $order->details()->create([
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'price' => $price,
+                    'quantity' => $quantity,
+                    'total' => $total,
+                ]);
+
+                $subtotal += $total;
+            }
+
+            $order->update([
+                'subtotal' => $subtotal,
+                'grand_total' => max(0, $subtotal - (float) $order->discount),
+            ]);
+        });
+
+        $order->refresh()->load('details');
+
+        return response()->json([
+            'message' => 'Order items updated.',
+            'order' => [
+                'subtotal' => (float) $order->subtotal,
+                'discount' => (float) $order->discount,
+                'grand_total' => (float) $order->grand_total,
+            ],
+            'items' => $order->details->map(fn ($detail) => [
+                'id' => $detail->id,
+                'product_id' => $detail->product_id,
+                'product_name' => $detail->product_name,
+                'price' => (float) $detail->price,
+                'quantity' => (int) $detail->quantity,
+                'total' => (float) $detail->total,
+            ])->values(),
+        ]);
     }
 
     public function orderbill($id)

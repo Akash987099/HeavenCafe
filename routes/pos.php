@@ -14,6 +14,7 @@ Route::middleware(['auth:pos'])->group(function () {
         Route::get('/order/search', 'search')->name('search');
         Route::get('/order/create', 'save')->name('save');
         Route::get('/order/view/{id}', 'orderView')->name('order.view');
+        Route::put('/order/{id}/items', 'updateOrderItems')->name('order.items.update');
         Route::get('/order/bill/{id}', 'orderbill')->name('order.bill');
         Route::post('/order/payment/{id}', 'payment')->name('order.payment');
 

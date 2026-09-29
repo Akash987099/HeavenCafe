@@ -164,13 +164,19 @@
 
                                 </div>
 
-                                <span
+                                <div class="flex items-center gap-3">
+                                <button type="button" id="addItemButton"
+                                    class="mr-3 inline-flex items-center gap-2 rounded-lg border border-[#128C7E] px-3 py-1.5 text-xs font-semibold text-[#128C7E] hover:bg-emerald-50">
+                                    <i class="fas fa-plus"></i> Add item
+                                </button>
+                                <span id="itemCount"
                                     class="px-3 py-1.5 rounded-full
                                            bg-emerald-50 text-[#128C7E]
                                            text-xs font-semibold"
                                 >
                                     {{ $order->details->count() }} Items
                                 </span>
+                                </div>
 
                             </div>
 
@@ -209,6 +215,7 @@
 
 
                                 {{-- Products --}}
+                                <div id="orderItemsList">
                                 @foreach($order->details as $detail)
 
                                     <div
@@ -231,19 +238,10 @@
 
 
                                         {{-- Quantity --}}
-                                        <div class="w-20 text-center">
-
-                                            <span
-                                                class="inline-flex items-center
-                                                       justify-center min-w-8 h-8
-                                                       px-2 rounded-lg
-                                                       bg-slate-100
-                                                       text-sm font-semibold
-                                                       text-slate-700"
-                                            >
-                                                {{ $detail->quantity }}
-                                            </span>
-
+                                        <div class="w-20 flex items-center justify-center gap-1">
+                                            <button type="button" class="quantity-change w-7 h-7 rounded bg-slate-100 text-slate-700 hover:bg-slate-200" data-change="-1" title="Decrease quantity">−</button>
+                                            <span class="item-quantity min-w-5 text-center text-sm font-semibold text-slate-700">{{ $detail->quantity }}</span>
+                                            <button type="button" class="quantity-change w-7 h-7 rounded bg-slate-100 text-slate-700 hover:bg-slate-200" data-change="1" title="Increase quantity">+</button>
                                         </div>
 
 
@@ -255,7 +253,6 @@
                                             </span>
 
                                         </div>
-
 
                                         {{-- Total --}}
                                         <div class="w-28 text-right">
@@ -269,9 +266,16 @@
 
                                         </div>
 
+                                        <div class="w-12 text-right">
+                                            <button type="button" class="remove-item text-red-500 hover:text-red-700" title="Remove item">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+
                                     </div>
 
                                 @endforeach
+                                </div>
 
                             </div>
 
@@ -279,6 +283,35 @@
 
                     </div>
 
+                </div>
+
+                <div id="productPicker" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
+                    <div class="flex max-h-[85vh] w-full max-w-5xl flex-col rounded-2xl bg-white shadow-xl">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
+                            <div><h3 class="text-lg font-bold text-slate-800">Add product</h3><p class="mt-1 text-xs text-slate-400">Select a product to add to this bill</p></div>
+                            <div class="flex items-center gap-3">
+                                <select id="productPickerCategory" class="h-10 min-w-40 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 focus:border-[#128C7E] focus:outline-none">
+                                    <option value="">All categories</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" id="closeProductPicker" class="text-slate-400 hover:text-slate-700"><i class="fas fa-times text-lg"></i></button>
+                            </div>
+                        </div>
+                        <div id="productPickerResults" class="min-h-0 flex-1 overflow-y-auto p-5">
+                            <div id="productPickerGrid" class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4"></div>
+                            <div id="productPickerLoadMore" class="hidden py-4 text-center text-xs text-slate-400"><i class="fas fa-spinner fa-spin mr-1"></i> Loading more products...</div>
+                            <div id="productPickerEmpty" class="py-10 text-center text-sm text-slate-400">Loading products...</div>
+                            <div id="productPickerSentinel" class="h-px"></div>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 border-t border-slate-200 p-4">
+                            <span id="selectedProductCount" class="text-sm text-slate-500">No products selected</span>
+                            <button type="button" id="addSelectedProducts" disabled class="h-11 rounded-xl bg-[#128C7E] px-5 text-sm font-semibold text-white transition hover:bg-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50">
+                                <i class="fas fa-plus mr-1"></i> Add selected items
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -477,7 +510,7 @@
                                         Subtotal
                                     </span>
 
-                                    <span class="text-sm font-medium text-slate-700">
+                                    <span id="subtotalAmount" class="text-sm font-medium text-slate-700">
                                         ₹{{ number_format($order->subtotal, 2) }}
                                     </span>
 
@@ -490,7 +523,7 @@
                                         Discount
                                     </span>
 
-                                    <span class="text-sm font-medium text-slate-700">
+                                    <span id="discountAmount" class="text-sm font-medium text-slate-700">
                                         ₹{{ number_format($order->discount, 2) }}
                                     </span>
 
@@ -509,7 +542,7 @@
                                         Total
                                     </span>
 
-                                    <span
+                                    <span id="grandTotalAmount"
                                         class="text-2xl font-bold
                                                text-[#128C7E]"
                                     >
@@ -861,6 +894,202 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const itemsList = document.getElementById('orderItemsList');
+    const picker = document.getElementById('productPicker');
+    const pickerResults = document.getElementById('productPickerResults');
+    const pickerGrid = document.getElementById('productPickerGrid');
+    const pickerLoadMore = document.getElementById('productPickerLoadMore');
+    const pickerEmpty = document.getElementById('productPickerEmpty');
+    const pickerSentinel = document.getElementById('productPickerSentinel');
+    const pickerCategory = document.getElementById('productPickerCategory');
+    const selectedProductCount = document.getElementById('selectedProductCount');
+    const addSelectedProducts = document.getElementById('addSelectedProducts');
+    const addButton = document.getElementById('addItemButton');
+    const currency = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let items = @json($editableItems);
+    let isSaving = false;
+    let pickerPage = 1;
+    let pickerHasMore = false;
+    let pickerLoading = false;
+    let selectedProducts = new Map();
+
+    const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (character) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;'
+    })[character]);
+
+    function renderItems() {
+        itemsList.innerHTML = items.map((item, index) => `
+            <div class="flex items-center px-5 py-4 border-b border-slate-100 last:border-b-0">
+                <div class="flex-1 min-w-0"><p class="truncate text-sm font-semibold text-slate-800">${escapeHtml(item.product_name)}</p></div>
+                <div class="w-20 flex items-center justify-center gap-1">
+                    <button type="button" class="quantity-change w-7 h-7 rounded bg-slate-100 text-slate-700 hover:bg-slate-200" data-index="${index}" data-change="-1" title="Decrease quantity">−</button>
+                    <span class="min-w-5 text-center text-sm font-semibold text-slate-700">${item.quantity}</span>
+                    <button type="button" class="quantity-change w-7 h-7 rounded bg-slate-100 text-slate-700 hover:bg-slate-200" data-index="${index}" data-change="1" title="Increase quantity">+</button>
+                </div>
+                <div class="w-28 text-right text-sm text-slate-600">₹${currency.format(item.price)}</div>
+                <div class="w-28 text-right text-sm font-bold text-[#128C7E]">₹${currency.format(item.total)}</div>
+                <div class="w-12 text-right"><button type="button" class="remove-item text-red-500 hover:text-red-700" data-index="${index}" title="Remove item"><i class="fas fa-trash-alt"></i></button></div>
+            </div>`).join('');
+        document.getElementById('itemCount').textContent = `${items.length} ${items.length === 1 ? 'Item' : 'Items'}`;
+    }
+
+    function updateTotals(order) {
+        document.getElementById('paymentAmount').value = Number(order.grand_total).toFixed(2);
+        document.getElementById('subtotalAmount').textContent = `₹${currency.format(order.subtotal)}`;
+        document.getElementById('discountAmount').textContent = `₹${currency.format(order.discount)}`;
+        document.getElementById('grandTotalAmount').textContent = `₹${currency.format(order.grand_total)}`;
+    }
+
+    renderItems();
+
+    async function saveItems(nextItems) {
+        if (!nextItems.length) {
+            alert('At least one product is required in an order.');
+            return false;
+        }
+        if (isSaving) return false;
+        isSaving = true;
+        try {
+            const response = await fetch("{{ route('pos.order.items.update', $order->id) }}", {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                body: JSON.stringify({ items: nextItems.map(item => ({ product_id: item.product_id, quantity: item.quantity })) })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to update order items.');
+            items = data.items;
+            renderItems();
+            updateTotals(data.order);
+            return true;
+        } catch (error) {
+            alert(error.message || 'Unable to update order items.');
+            return false;
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    itemsList.addEventListener('click', async function (event) {
+        const quantityButton = event.target.closest('.quantity-change');
+        const removeButton = event.target.closest('.remove-item');
+        if (quantityButton) {
+            const index = Number(quantityButton.dataset.index);
+            const quantity = items[index].quantity + Number(quantityButton.dataset.change);
+            if (quantity < 1) return;
+            const nextItems = items.map((item, itemIndex) => itemIndex === index ? { ...item, quantity } : item);
+            await saveItems(nextItems);
+        }
+        if (removeButton) {
+            const index = Number(removeButton.dataset.index);
+            if (!confirm(`Remove ${items[index].product_name} from this bill?`)) return;
+            await saveItems(items.filter((_, itemIndex) => itemIndex !== index));
+        }
+    });
+
+    function showPicker() {
+        picker.classList.remove('hidden');
+        picker.classList.add('flex');
+        selectedProducts = new Map();
+        updateSelectedProductButton();
+        loadPickerProducts();
+    }
+    function hidePicker() { picker.classList.add('hidden'); picker.classList.remove('flex'); }
+
+    function updateSelectedProductButton() {
+        const count = selectedProducts.size;
+        selectedProductCount.textContent = count ? `${count} ${count === 1 ? 'product' : 'products'} selected` : 'No products selected';
+        addSelectedProducts.disabled = count === 0;
+        addSelectedProducts.innerHTML = `<i class="fas fa-plus mr-1"></i> Add selected items${count ? ` (${count})` : ''}`;
+    }
+    addButton.addEventListener('click', showPicker);
+    document.getElementById('closeProductPicker').addEventListener('click', hidePicker);
+    picker.addEventListener('click', event => { if (event.target === picker) hidePicker(); });
+    pickerCategory.addEventListener('change', () => loadPickerProducts());
+
+    async function loadPickerProducts(page = 1, append = false) {
+        if (pickerLoading || (append && !pickerHasMore)) return;
+        pickerLoading = true;
+        if (!append) {
+            pickerPage = 1;
+            pickerHasMore = false;
+            pickerGrid.innerHTML = '';
+            pickerEmpty.textContent = 'Loading products...';
+            pickerEmpty.classList.remove('hidden');
+        } else {
+            pickerLoadMore.classList.remove('hidden');
+        }
+        try {
+            const response = await fetch(`{{ route('pos.search') }}?page=${page}&category_id=${encodeURIComponent(pickerCategory.value)}`, { headers: { Accept: 'application/json' } });
+            const data = await response.json();
+            const products = data.products || [];
+            if (!response.ok || !data.success) throw new Error('Unable to load products.');
+            pickerHasMore = Boolean(data.pagination?.has_more_pages);
+            pickerPage = page + 1;
+            pickerEmpty.classList.toggle('hidden', products.length > 0 || append);
+            if (!products.length && !append) pickerEmpty.textContent = 'No active products found.';
+            products.forEach(product => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'add-product w-full rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-[#128C7E] hover:bg-emerald-50';
+                card.dataset.product = JSON.stringify(product);
+                if (selectedProducts.has(String(product.id))) {
+                    card.classList.add('border-[#128C7E]', 'bg-emerald-50');
+                }
+                const imagePath = String(product.image || '').trim();
+                const image = !imagePath
+                    ? `{{ asset('images/no-product.png') }}`
+                    : (/^(https?:)?\/\//i.test(imagePath) || imagePath.startsWith('data:'))
+                        ? imagePath
+                        : `{{ asset('') }}${imagePath.replace(/^\/+/, '')}`;
+                card.innerHTML = `<div class="h-32 overflow-hidden rounded-xl bg-slate-100 p-2"><img src="${image}" alt="${escapeHtml(product.name)}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='{{ asset('images/no-product.png') }}';"></div><div class="pt-3"><p class="min-h-10 text-sm font-semibold leading-5 text-slate-800">${escapeHtml(product.name)}</p><p class="mt-1 truncate text-xs text-slate-400">SKU: ${escapeHtml(product.sku_product_id || product.barcode_base || 'N/A')}</p></div><div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span class="text-xs font-medium text-slate-400">Price</span><span class="text-sm font-bold text-[#128C7E]">₹${currency.format(product.price)}</span></div>`;
+                pickerGrid.appendChild(card);
+            });
+        } catch (_) {
+            if (!append) { pickerEmpty.textContent = 'Products could not be loaded. Please try again.'; pickerEmpty.classList.remove('hidden'); }
+        } finally {
+            pickerLoading = false;
+            pickerLoadMore.classList.add('hidden');
+        }
+    }
+
+    new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) loadPickerProducts(pickerPage, true);
+    }, { root: pickerResults, rootMargin: '160px 0px' }).observe(pickerSentinel);
+
+    pickerResults.addEventListener('click', function (event) {
+        const button = event.target.closest('.add-product');
+        if (!button) return;
+        const product = JSON.parse(button.dataset.product);
+        const productId = String(product.id);
+        if (selectedProducts.has(productId)) {
+            selectedProducts.delete(productId);
+            button.classList.remove('border-[#128C7E]', 'bg-emerald-50');
+        } else {
+            selectedProducts.set(productId, product);
+            button.classList.add('border-[#128C7E]', 'bg-emerald-50');
+        }
+        updateSelectedProductButton();
+    });
+
+    addSelectedProducts.addEventListener('click', async function () {
+        if (!selectedProducts.size) return;
+        const nextItems = items.map(item => ({ ...item }));
+        selectedProducts.forEach(product => {
+            const existingIndex = nextItems.findIndex(item => Number(item.product_id) === Number(product.id));
+            if (existingIndex >= 0) nextItems[existingIndex].quantity += 1;
+            else nextItems.push({ product_id: product.id, product_name: product.name, price: Number(product.price), quantity: 1, total: Number(product.price) });
+        });
+        const originalContent = addSelectedProducts.innerHTML;
+        addSelectedProducts.disabled = true;
+        addSelectedProducts.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Adding...';
+        if (await saveItems(nextItems)) hidePicker();
+        else { addSelectedProducts.disabled = false; addSelectedProducts.innerHTML = originalContent; }
+    });
+});
 </script>
 
 <script>
