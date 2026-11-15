@@ -1426,7 +1426,7 @@ class PosController extends Controller
                 return $leave;
             }) : collect();
 
-          dd($approvedLeaves);
+        //   dd($approvedLeaves);
 
         $unpaidLeaveDays = $approvedLeaves
             ->where('leave_type', 'Unpaid Leave')
