@@ -1450,6 +1450,15 @@ class PosController extends Controller
         $advanceTotal = (float) $monthAdvances->sum('amount');
         $finalSalary = max(0, $grossSalary - $leaveDeduction - $advanceTotal);
 
+        dd([
+    'staff_id' => $staff->id,
+    'joining_date' => $joiningDate?->toDateString(),
+    'has_joined' => $hasJoinedByMonthEnd,
+    'month_start' => $monthStart->toDateString(),
+    'month_end' => $monthEnd->toDateString(),
+    'payroll_start' => $payrollStart->toDateString(),
+]);
+
         return view('pos.staffs.salary', compact(
             'staff',
             'selectedMonth',
