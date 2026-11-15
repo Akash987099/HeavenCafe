@@ -1394,8 +1394,7 @@ class PosController extends Controller
         ]);
 
         $staff = Pos::query()
-            // ->where('user_id', Auth::guard('pos')->id())
-            ->where('user_id', $id)
+            ->where('user_id', Auth::guard('pos')->id())
             ->findOrFail($id);
 
         $selectedMonth = $request->query('month', now()->format('Y-m'));
