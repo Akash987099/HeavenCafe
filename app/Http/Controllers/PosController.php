@@ -1411,8 +1411,8 @@ class PosController extends Controller
         $approvedLeaves = $hasJoinedByMonthEnd ? Leave::query()
             ->where('pos_user_id', $staff->id)
             ->where('status', 'approved')
-            ->whereDate('start_date', '<=', $monthEnd->toDateString())
-            ->whereDate('end_date', '>=', $payrollStart->toDateString())
+            // ->whereDate('start_date', '<=', $monthEnd->toDateString())
+            // ->whereDate('end_date', '>=', $payrollStart->toDateString())
             ->orderBy('start_date')
             ->get()
             ->map(function ($leave) use ($payrollStart, $monthEnd) {
