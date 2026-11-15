@@ -30,6 +30,14 @@
                 <i class="fas fa-tasks w-5 text-center"></i>
                 <span>My Tasks</span>
             </a>
+
+            <a href="{{ route('leave.index') }}"
+            class="sidebar-link {{ request()->routeIs('leave.leave*') ? 'active' : '' }}
+            flex items-center gap-3 px-4 py-3 rounded-xl
+            text-sm font-medium text-slate-600">
+            <i class="fas fa-calendar-days w-5 text-center"></i>
+            <span>Leaves</span>
+        </a>
         @else
 
         <a href="{{ route('pos.index') }}"
@@ -84,16 +92,13 @@
             </a>
         @endif
 
-            <a href="{{ route('leave.index') }}"
-                class="sidebar-link {{ request()->routeIs('leave.leave*') ? 'active' : '' }}
-              flex items-center gap-3 px-4 py-3 rounded-xl
-              text-sm font-medium text-slate-600">
-
-                <i class="fas fa-calendar-days w-5 text-center"></i>
-
-                <span>Leaves</span>
-
-            </a>
+        <a href="{{ route('leave.index') }}"
+            class="sidebar-link {{ request()->routeIs('leave.leave*') ? 'active' : '' }}
+            flex items-center gap-3 px-4 py-3 rounded-xl
+            text-sm font-medium text-slate-600">
+            <i class="fas fa-calendar-days w-5 text-center"></i>
+            <span>Leaves</span>
+        </a>
 
         <a href="{{ route('pos.bills') }}"
             class="sidebar-link {{ request()->routeIs('pos.bills*') ? 'active' : '' }}
